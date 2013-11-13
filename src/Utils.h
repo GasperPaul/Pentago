@@ -4,7 +4,7 @@
 /*
  * Helper class for "K in a row" on N x M board.
  * Author: Youw.
- * Version: 1.1 beta.
+ * Version: 1.2 beta.
  */
 class Utils {
 private:
@@ -36,7 +36,7 @@ private:
 				}
 			} else {
 				sgn=tmpSgn;
-				sgnCount=0;
+				sgnCount=1;
 			}
 			col += dCol;
 			row += dRow;
