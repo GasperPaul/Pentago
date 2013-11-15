@@ -7,7 +7,7 @@
 
 #include "Game.h"
 #include <iostream>
-
+#include "Utils.h"
 
 Game* Game::instance = 0;
 
@@ -36,6 +36,12 @@ void Game::Run() {
 
 		// displaying the board
 		board.Display();
+
+		// checking win condition
+		if (short win = Utils::Check(board, 6, 6, 5)) {
+			std::cout << players[win>0 ? 0 : 1]->Name() << " wins." << std::endl;
+			break;
+		}
 	}
 	std::cout << "Game ended." << std::endl;
 }
@@ -46,7 +52,7 @@ Game::Game() {
 }
 
 Game::~Game() {
-	delete[] players;
+//	delete[] players;
 }
 
 void Game::TempTestReferee(){
