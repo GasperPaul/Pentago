@@ -1,4 +1,6 @@
 /*
+ * Game.h
+ *
  *  Created on: 10 лист. 2013
  *      Author: Gasper
  */
@@ -8,12 +10,14 @@
 
 #include "Board.h"
 #include "Player.h"
+#include "Referee.h"
 
 class Game {
 public:
 	virtual ~Game();
 	static Game* Instance();
 	void Run();
+	void TempTestReferee();//Temp
 
 private:
 	Board board;

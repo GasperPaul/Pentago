@@ -1,11 +1,13 @@
 /*
+ * Game.cpp
+ *
  *  Created on: 10 лист. 2013
  *      Author: Gasper
  */
 
 #include "Game.h"
-#include "Utils.h"
 #include <iostream>
+
 
 Game* Game::instance = 0;
 
@@ -33,30 +35,38 @@ void Game::Run() {
 		currentPlayer = currentPlayer ? 0 : 1;
 
 		// displaying the board
-		std::cout << std::endl << "-------------------------" << std::endl;
-		for(short i = 0; i<6; i++) {
-			std::cout << "|";
-			for(short j = 0; j<6; j++)
-				std::cout << (board[i][j]<0 ? "" : " ") << board[i][j]
-						  << (board[i][j]>9 ? "|" : " |");
-			std::cout << std::endl;
-		}
-		std::cout << "-------------------------" << std::endl << std::endl;
-
-		// checking win condition
-		if (short win = Utils::Check(board, 6, 6, 5)) {
-			std::cout << players[win>0 ? 0 : 1]->Name() << " wins." << std::endl;
-			break;
-		}
+		board.Display();
 	}
 	std::cout << "Game ended." << std::endl;
 }
 
 Game::Game() {
-	players = { new Player("Player1"), new Player("Player2") };
+	players[0] = new Player("Player1");
+	players[1] = new Player("Player2");
 }
 
 Game::~Game() {
 	delete[] players;
 }
+
+void Game::TempTestReferee(){
+	Referee referee;
+	//pull board:
+	for(int i=0;i<6;i++){
+		board[i][i]=-2;
+		board[5][i]=2;
+	}
+	//display board:
+	board.Display();
+	//testing Referee methods:
+	std::cout << "WinStatus=" << referee.UpdateWinState(board) << std::endl;
+	std::cout << referee.WinnerIs() << " is winner (-1=Second, 0=NoOne, 1=First, 2 = Draw)" << std::endl;
+	referee.ShowCombinations();
+	return;
+}
+
+
+
+
+
 
