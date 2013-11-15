@@ -4,7 +4,7 @@
 /*
  * Helper class for "K in a row" on N x M board.
  * Author: Youw.
- * Version: 1.2 beta.
+ * Version: 1.25 beta.
  */
 class Utils {
 private:
