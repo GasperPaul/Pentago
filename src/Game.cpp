@@ -45,6 +45,7 @@ void Game::Run() {
 }
 
 Game::Game() {
+	// players = { new Player("Player1"), new Player("Player2") }
 	players[0] = new Player("Player1");
 	players[1] = new Player("Player2");
 }

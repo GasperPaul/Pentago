@@ -11,19 +11,19 @@
 
 class Board {
 public:
-        enum RotateDirection {Left, Right};
+	enum RotateDirection { Left, Right };
 
-        Board();
-        virtual ~Board();
-        bool putStone(short, short, short);
-        void Rotate(short, RotateDirection);
-        void Display();
-        short& operator()(short, short);
-        short* operator[](short);
+	Board();
+	virtual ~Board();
+	bool putStone(short, short, short);
+	void Rotate(short, RotateDirection);
+	void Display();
+	short& operator()(short, short);
+	short* operator[](short);
 
 private:
-        short board[6][6];
-        unsigned step;
+	short board[6][6];
+	unsigned step;
 };
 
 #endif /* BOARD_H */

@@ -15,7 +15,7 @@ private:
 	};
 
 	/*
-	 * Recursive competitive line checking.
+	 * Competitive line checking.
 	 * Class T must implement operator [].
 	 */
 	template <typename T>
