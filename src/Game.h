@@ -22,6 +22,7 @@ public:
 private:
 	Board board;
 	Player* players[2];
+	Referee referee;
 
 	static Game* instance;
 	Game();

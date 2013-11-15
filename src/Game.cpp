@@ -7,7 +7,7 @@
 
 #include "Game.h"
 #include <iostream>
-#include "Utils.h"
+
 
 Game* Game::instance = 0;
 
@@ -20,7 +20,7 @@ void Game::Run() {
 	short currentPlayer = 0;
 
 	std::cout << "Game begins." << std::endl;
-	while (true) {
+	while (referee.UpdateWinState(board)==NoOne) {
 		short* step = players[currentPlayer]->Step();
 		if (step[0] < 0) {
 			std::cout << players[currentPlayer]->Name() << " left the game." << std::endl;
@@ -36,13 +36,11 @@ void Game::Run() {
 
 		// displaying the board
 		board.Display();
-
-		// checking win condition
-		if (short win = Utils::Check(board, 6, 6, 5)) {
-			std::cout << players[win>0 ? 0 : 1]->Name() << " wins." << std::endl;
-			break;
-		}
 	}
+
+	if(referee.WinnerIs()==Draw) std::cout << "There is a Draw!" << std::endl;
+	if(referee.WinnerIs()==First)std::cout << "Player1 wins a game!" << std::endl;
+	if(referee.WinnerIs()==Second)std::cout << "Player2 wins a game!" << std::endl;
 	std::cout << "Game ended." << std::endl;
 }
 
@@ -52,7 +50,7 @@ Game::Game() {
 }
 
 Game::~Game() {
-//	delete[] players;
+	delete[] players;
 }
 
 void Game::TempTestReferee(){
