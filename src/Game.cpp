@@ -8,7 +8,6 @@
 #include "Game.h"
 #include <iostream>
 
-
 Game* Game::instance = 0;
 
 Game* Game::Instance() {
@@ -39,15 +38,12 @@ void Game::Run() {
 	}
 
 	if(referee.WinnerIs()==Draw) std::cout << "There is a Draw!" << std::endl;
-	if(referee.WinnerIs()==First)std::cout << "Player1 wins a game!" << std::endl;
-	if(referee.WinnerIs()==Second)std::cout << "Player2 wins a game!" << std::endl;
+	if(referee.WinnerIs()==First) std::cout << "Player1 wins a game!" << std::endl;
+	if(referee.WinnerIs()==Second) std::cout << "Player2 wins a game!" << std::endl;
 	std::cout << "Game ended." << std::endl;
 }
 
-Game::Game() {
-	// players = { new Player("Player1"), new Player("Player2") }
-	players[0] = new Player("Player1");
-	players[1] = new Player("Player2");
+Game::Game() : players { new Player("Player1"), new Player("Player2") } {
 }
 
 Game::~Game() {
