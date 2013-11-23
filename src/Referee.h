@@ -44,7 +44,7 @@ public:
 
 	winstatus WinnerIs(void); //
 	winstatus UpdateWinState(Board b); //
-	void ShowCombinations(void); //
+	void ShowCombinationsTemp(void); //
 };
 
 #endif /* REFEREE_H_ */

@@ -126,7 +126,7 @@ void Referee::_AddCombination(short bi, short bj, short ei, short ej,
 }
 
 //= Display all current win combinations
-void Referee::ShowCombinations(void){
+void Referee::ShowCombinationsTemp(void){
 	WinCombinationStruct t;
 	for(unsigned i=0;i< _winState.winCombinations.size();i++){
 		t=_winState.winCombinations[i];

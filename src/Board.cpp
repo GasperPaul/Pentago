@@ -64,7 +64,7 @@ Board::Board() {
 
 Board::~Board() { }
 
-void Board::Display(){
+void Board::DisplayTemp(){
 	std::cout << std::endl << "-------------------------" << std::endl;
 	for(short i = 0; i<6; i++) {
 		std::cout << "|";

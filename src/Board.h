@@ -17,7 +17,7 @@ public:
 	virtual ~Board();
 	bool putStone(short, short, short);
 	void Rotate(short, RotateDirection);
-	void Display();
+	void DisplayTemp();
 	short& operator()(short, short);
 	short* operator[](short);
 

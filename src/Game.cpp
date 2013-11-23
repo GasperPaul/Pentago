@@ -34,7 +34,7 @@ void Game::Run() {
 		currentPlayer = currentPlayer ? 0 : 1;
 
 		// displaying the board
-		board.Display();
+		board.DisplayTemp();
 	}
 
 	if(referee.WinnerIs()==Draw) std::cout << "There is a Draw!" << std::endl;
@@ -58,11 +58,11 @@ void Game::TempTestReferee(){
 		board[5][i]=2;
 	}
 	//display board:
-	board.Display();
+	board.DisplayTemp();
 	//testing Referee methods:
 	std::cout << "WinStatus=" << referee.UpdateWinState(board) << std::endl;
 	std::cout << referee.WinnerIs() << " is winner (-1=Second, 0=NoOne, 1=First, 2 = Draw)" << std::endl;
-	referee.ShowCombinations();
+	referee.ShowCombinationsTemp();
 	return;
 }
 
