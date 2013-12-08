@@ -7,7 +7,6 @@
 
 #ifndef BOARD_H
 #define BOARD_H
-#include<iostream>
 
 class Board {
 public:
@@ -17,13 +16,15 @@ public:
 	virtual ~Board();
 	bool putStone(short, short, short);
 	void Rotate(short, RotateDirection);
-	void DisplayTemp();
+	
+	//TODO: треба зробити один з них const
 	short& operator()(short, short);
 	short* operator[](short);
-
+	
 private:
 	short board[6][6];
 	unsigned step;
+	
 };
 
 #endif /* BOARD_H */

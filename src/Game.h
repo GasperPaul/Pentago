@@ -9,17 +9,28 @@
 #define GAME_H
 
 #include "Board.h"
-#include "Player.h"
+#include "PlayerLocal.h"
+#include "PlayerNetwork.h"
 #include "Referee.h"
+#include "Network.h"
+#include "UserInterface.h"
 
 class Game {
 public:
 	virtual ~Game();
 	static Game* Instance();
+
+	//менюшка, тощо
 	void Run();
-	void TempTestReferee();//Temp
+
+//	void TempTestReferee();//Temp
+	UserInterface userInterface;
+	Network network;
 
 private:
+	//а тут вже буде вся гра, аж поки не вийде назад в меню
+	void PlayGame();
+
 	Board board;
 	Player* players[2];
 	Referee referee;

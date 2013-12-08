@@ -6,68 +6,74 @@
  */
 
 #include "Game.h"
-#include <iostream>
+#include "Player.h"
 
 Game* Game::instance = 0;
 
 Game* Game::Instance() {
-	if (!instance) instance = new Game();
+	if (!instance)
+		instance = new Game();
 	return instance;
 }
 
 void Game::Run() {
+	//TODO:menu here
+	players[0] = new PlayerLocal("Player1");
+	players[1] = new PlayerLocal("Player2");
+	PlayGame();
+}
+
+void Game::PlayGame() {
 	short currentPlayer = 0;
 
-	std::cout << "Game begins." << std::endl;
-	while (referee.UpdateWinState(board)==NoOne) {
-		short* step = players[currentPlayer]->Step();
-		if (step[0] < 0) {
-			std::cout << players[currentPlayer]->Name() << " left the game." << std::endl;
+	userInterface.Show_GameBegin();
+	userInterface.PaintBoard(board);
+	while (referee.UpdateWinState(board) == NoOne) {
+		Player::Step* step = players[currentPlayer]->MakeStep();
+		if (step->i < 0) {
+//			std::cout << players[currentPlayer]->Name() << " left the game." << std::endl;
 			break;
 		}
-		while (!board.putStone(step[0], step[1], currentPlayer)) {
-			std::cout << "This step is not allowed. Try again." << std::endl;
-			step = players[currentPlayer]->Step();
+		while (!board.putStone(step->i, step->j, currentPlayer)) {
+			userInterface.Show_StepIsNotAllowed();
+			step = players[currentPlayer]->MakeStep();
 		}
-		board.Rotate(step[2], (Board::RotateDirection)step[3]);
+		board.Rotate(step->quarter, step->direction);
 		delete step;
 		currentPlayer = currentPlayer ? 0 : 1;
 
 		// displaying the board
-		board.DisplayTemp();
+		userInterface.PaintBoard(board);
 	}
 
-	if(referee.WinnerIs()==Draw) std::cout << "There is a Draw!" << std::endl;
-	if(referee.WinnerIs()==First) std::cout << "Player1 wins a game!" << std::endl;
-	if(referee.WinnerIs()==Second) std::cout << "Player2 wins a game!" << std::endl;
-	std::cout << "Game ended." << std::endl;
+	userInterface.ShowWinner(referee.WinnerIs(), *players);
 }
 
-Game::Game() : players { new Player("Player1"), new Player("Player2") } {
+Game::Game() :
+		players { NULL, NULL } {
 }
 
 Game::~Game() {
-	delete[] players;
+	if (players[0])
+		delete players[0];
+	if (players[1])
+		delete players[1];
 }
 
-void Game::TempTestReferee(){
-	Referee referee;
-	//pull board:
-	for(int i=0;i<6;i++){
-		board[i][i]=-2;
-		board[5][i]=2;
-	}
-	//display board:
-	board.DisplayTemp();
-	//testing Referee methods:
-	std::cout << "WinStatus=" << referee.UpdateWinState(board) << std::endl;
-	std::cout << referee.WinnerIs() << " is winner (-1=Second, 0=NoOne, 1=First, 2 = Draw)" << std::endl;
-	referee.ShowCombinationsTemp();
-	return;
-}
-
-
-
-
-
+/*void Game::TempTestReferee() {
+ Referee referee;
+ //pull board:
+ for (int i = 0; i < 6; i++) {
+ board[i][i] = -2;
+ board[5][i] = 2;
+ }
+ //display board:
+ board.DisplayTemp();
+ //testing Referee methods:
+ std::cout << "WinStatus=" << referee.UpdateWinState(board) << std::endl;
+ std::cout << referee.WinnerIs() << " is winner (-1=Second, 0=NoOne, 1=First, 2 = Draw)"
+ << std::endl;
+ referee.ShowCombinationsTemp();
+ return;
+ }*/
 

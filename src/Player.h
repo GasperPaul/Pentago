@@ -7,16 +7,24 @@
 #define PLAYER_H
 
 #include <string>
+using std::string;
+
+#include "Board.h"
 
 class Player {
 public:
+	struct Step {
+		short i,j;
+		short quarter;
+		Board::RotateDirection direction;
+	};
 	Player(std::string _name = "Player");
 	virtual ~Player();
-	short* Step();
-	std::string Name();
+	virtual Step* MakeStep();
+	string Name() const;
 
 private:
-	std::string name;
+	string name;
 };
 
 #endif /* PLAYER_H */
