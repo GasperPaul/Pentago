@@ -23,7 +23,7 @@ public:
 	
 private:
 	short board[6][6];
-	unsigned step;
+	unsigned stepNum;
 	
 };
 

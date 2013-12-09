@@ -4,7 +4,9 @@
 
 Player::Step* PlayerLocal::MakeStep() {
 	Game *game = Game::Instance();
-	return game->Instance()->userInterface.GetPlayerStep(this);
+	Player::Step*step = game->userInterface.GetPlayerStep(this);
+	game->network.SendPlayerStep(step);
+	return step;
 }
 
 PlayerLocal::PlayerLocal(std::string _name) :

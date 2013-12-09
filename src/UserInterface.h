@@ -1,6 +1,8 @@
 #ifndef USER_INTERFACE_H
 #define USER_INTERFACE_H
 
+#include <string>
+
 #include "Board.h"
 #include "Referee.h"
 #include "Player.h"
@@ -25,14 +27,23 @@ public:
 	void Show_StepIsNotAllowed();
 	
 	//показати початкову менюшку
-	MenuItem ShowMenu();
+	MenuItem MenuDialog();
 
 	//показати менюшку з вибором адреси хоста
 	//колись можна написати автоматичний пошук по локальній мережі
-	Network::Settings* GetHostAddress();
+	bool GetHostAddress(Network::RemoteAddress* addr);
 
 	//куча анімації, графіки і, обов'язково, вибух
-	void Show_GameBegin();
+	void Show_GameBegins();
+
+	//можливо з клави, а може з налаштувань, тощо
+	std::string InputPlayerName(std::string who);
+
+	//віконечко з бігунком (викликається з Network)
+	void _WaitForConnection();
+
+	//тут треба закривати віконечко з бігунком, якщо воно відкрите (також викликати з Network)
+	void _PlayerConnected(const Player* player);
 };
 
 #endif /* USER_INTERFACE_H */

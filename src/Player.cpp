@@ -5,8 +5,12 @@
 
 #include "Player.h"
 
-std::string Player::Name() const{
+std::string Player::GetName() const{
 	return name;
+}
+
+void Player::SetName(const string name) {
+	this->name = name;
 }
 
 Player::Step* Player::MakeStep() {

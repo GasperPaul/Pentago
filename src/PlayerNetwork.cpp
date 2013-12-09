@@ -3,9 +3,7 @@
 #include "Game.h"
 
 Player::Step* PlayerNetwork::MakeStep(){
-//	Game *game = Game::Instance();
-	//TODO: do it later
-	return NULL;
+	return Game::Instance()->network.GetPlayerStep();
 }
 
 PlayerNetwork::PlayerNetwork(std::string _name) :

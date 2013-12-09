@@ -21,8 +21,8 @@ public:
 	Player(std::string _name = "Player");
 	virtual ~Player();
 	virtual Step* MakeStep();
-	string Name() const;
-
+	string GetName() const;
+	void SetName(const string name);
 private:
 	string name;
 };

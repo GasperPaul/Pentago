@@ -8,15 +8,20 @@
 #ifndef GAME_H
 #define GAME_H
 
+
+#include "UserInterface.h"
 #include "Board.h"
 #include "PlayerLocal.h"
 #include "PlayerNetwork.h"
 #include "Referee.h"
 #include "Network.h"
-#include "UserInterface.h"
+#include "PentagoServer.h"
 
 class Game {
 public:
+	enum PlayersNum {
+		Player1 = 0, Player2 = 1, PlayerBoth=-1
+	};
 	virtual ~Game();
 	static Game* Instance();
 
@@ -26,6 +31,8 @@ public:
 //	void TempTestReferee();//Temp
 	UserInterface userInterface;
 	Network network;
+	void SetPlayerName(PlayersNum playerNum, const string& name);
+	Player* GetPlayer(PlayersNum who) const;
 
 private:
 	//а тут вже буде вся гра, аж поки не вийде назад в меню
@@ -34,7 +41,7 @@ private:
 	Board board;
 	Player* players[2];
 	Referee referee;
-
+	PentagoServer *server;
 	static Game* instance;
 	Game();
 	Game(const Game&);

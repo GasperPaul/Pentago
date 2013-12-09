@@ -1,10 +1,13 @@
 #include "UserInterface.h"
 
 #include "Game.h"
+#include "PentagoServer.h"
+#include "Player.h"
 
 #include <iostream>
 #include <string>
-#include "Player.h"
+#include <stdio.h>
+#include <climits>
 
 using std::cout;
 using std::cin;
@@ -17,9 +20,8 @@ UserInterface::UserInterface() {
 Player::Step* UserInterface::GetPlayerStep(const Player* player) {
 	short x, y, q, r;
 	bool invalid = true;
-	cout << player->Name() << ", make your move: " << endl
-			<< "row | column | quadrant | left=0, right=1 " << endl
-			<< "End game Ч any value < 0."
+	cout << player->GetName() << ", make your move: " << endl
+			<< "row | column | quadrant | left=0, right=1 " << endl << "End game Ч any value < 0."
 			<< endl;
 	do {
 		cout << "> ";
@@ -36,11 +38,10 @@ Player::Step* UserInterface::GetPlayerStep(const Player* player) {
 
 void UserInterface::PaintBoard(Board& board) {
 	cout << endl << "-------------------------" << endl;
-	for(short i = 0; i<6; i++) {
+	for (short i = 0; i < 6; i++) {
 		cout << "|";
-		for(short j = 0; j<6; j++)
-			cout << (board[i][j]<0 ? "" : " ") << board[i][j]
-					  << (board[i][j]>9 ? "|" : " |");
+		for (short j = 0; j < 6; j++)
+			cout << (board[i][j] < 0 ? "" : " ") << board[i][j] << (board[i][j] > 9 ? "|" : " |");
 		cout << endl;
 	}
 	cout << "-------------------------" << endl << endl;
@@ -50,9 +51,9 @@ void UserInterface::ShowWinner(winstatus status, Player players[2]) {
 	if (status == Draw)
 		cout << "There is a Draw!" << endl;
 	if (status == First)
-		cout << players[0].Name() <<" wins a game!" << endl;
+		cout << players[0].GetName() << " wins a game!" << endl;
 	if (status == Second)
-		cout << players[1].Name() <<" wins a game!" << endl;
+		cout << players[1].GetName() << " wins a game!" << endl;
 	cout << "Game ended." << endl;
 }
 
@@ -60,16 +61,47 @@ void UserInterface::Show_StepIsNotAllowed() {
 
 }
 
-void UserInterface::Show_GameBegin() {
+void UserInterface::Show_GameBegins() {
 	cout << "Game begins." << endl;
 }
 
-UserInterface::MenuItem UserInterface::ShowMenu() {
+UserInterface::MenuItem UserInterface::MenuDialog() {
 	char getInput;
 	cout << "\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
-			<< endl << "3. Connect to host." << endl;
+			<< endl << "3. Connect to host." << endl << "0. Exit game." << endl;
 	do {
-		cin.get(getInput);
-	} while ((getInput >= '0') && (getInput <= '3'));
+		getInput = getchar();
+	} while ((getInput < '0') || (getInput > '3'));
+	getchar();
 	return (UserInterface::MenuItem) (getInput - '0');
+}
+
+std::string UserInterface::InputPlayerName(std::string who) {
+	cout << "Enter " << who << " name: ";
+	std::string name;
+	//в мене п≥здить екл≥пс, але комп≥лить запросто
+	std::getline(cin, name);
+	if (name == "") {
+		name = "player";
+	}
+	return name;
+}
+
+void UserInterface::_WaitForConnection() {
+	cout << "Waiting for oponent..." << endl;
+}
+
+void UserInterface::_PlayerConnected(const Player* player) {
+	cout << "Player \"" << player->GetName() << "\" connected." << endl;
+}
+
+bool UserInterface::GetHostAddress(Network::RemoteAddress* addr) {
+	cout << "Enter host address: ";
+	getline(cin, addr->addr);
+	cout << "Enter host port (-1 for default): ";
+	getline(cin, addr->port);
+	if (addr->port == "-1") {
+		addr->port = PentagoServer::DEFAULT_PORT;
+	}
+	return true;
 }

@@ -9,8 +9,8 @@
 
 bool Board::putStone(short row, short column, short player) {
 	if (board[row][column]) return false;
-	board[row][column] = player ? -1*step : step;
-	if (player) step++;
+	board[row][column] = player ? -1*stepNum : stepNum;
+	if (player) stepNum++;
 	return true;
 }
 
@@ -59,7 +59,7 @@ Board::Board() {
 	for (short i = 0; i<6; i++)
 		for (short j = 0; j<6; j++)
 			board[i][j] = 0;
-	step = 1;
+	stepNum = 1;
 }
 
 Board::~Board() { }

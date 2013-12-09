@@ -7,6 +7,7 @@
 
 #include "Game.h"
 #include "Player.h"
+#include "PentagoServer.h"
 
 Game* Game::instance = 0;
 
@@ -16,17 +17,81 @@ Game* Game::Instance() {
 	return instance;
 }
 
+Player* Game::GetPlayer(PlayersNum who) const {
+	if (who != PlayerBoth)
+		return players[who];
+	return NULL;
+}
+
 void Game::Run() {
-	//TODO:menu here
-	players[0] = new PlayerLocal("Player1");
-	players[1] = new PlayerLocal("Player2");
-	PlayGame();
+	int iResult;
+	std::string myName = userInterface.InputPlayerName("your");
+	for (;;)
+		switch (userInterface.MenuDialog()) {
+		case UserInterface::ExitGame: {
+			return;
+		}
+		case UserInterface::LocalGame: {
+			server = new PentagoServer(PentagoServer::DEFAULT_PORT);
+			delete players[Player1];
+			delete players[Player2];
+			players[Player1] = new PlayerLocal(myName);
+			players[Player2] = new PlayerLocal(userInterface.InputPlayerName("player 2"));
+			network.Connect(new Network::RemoteAddress { "127.0.0.1", PentagoServer::DEFAULT_PORT },
+					players, (char)PlayerBoth);
+			PlayGame();
+			delete server;
+			server = 0;
+			break;
+		}
+		case UserInterface::StartHost: {
+			server = new PentagoServer(PentagoServer::DEFAULT_PORT);
+			delete players[Player1];
+			delete players[Player2];
+			players[Player1] = new PlayerLocal(myName);
+			players[Player2] = new PlayerNetwork("Player");
+			iResult = network.Connect(new Network::RemoteAddress { "127.0.0.1",
+					PentagoServer::DEFAULT_PORT }, players, Player1);
+			if (iResult == 0) {
+				if (network.WaitForConnection()) {
+					PlayGame();
+				}
+			}
+			delete server;
+			server = 0;
+			break;
+		}
+		case UserInterface::ConnectToServer: {
+			Network::RemoteAddress* addr = new Network::RemoteAddress;
+			if (userInterface.GetHostAddress(addr)) {
+				delete players[Player2];
+				delete players[Player1];
+				players[Player2] = new PlayerLocal(myName);
+				players[Player1] = new PlayerNetwork("Player1");
+				iResult = network.Connect(addr, players, Player2);
+				if (iResult == 0) {
+					PlayGame();
+				}
+			}
+			delete addr;
+			break;
+		}
+		}
+}
+
+void Game::SetPlayerName(PlayersNum playerNum, const string& name) {
+	if (playerNum != PlayerBoth) {
+		players[playerNum]->SetName(name);
+	} else {
+		players[Player1]->SetName(name);
+		players[Player2]->SetName(name);
+	}
 }
 
 void Game::PlayGame() {
 	short currentPlayer = 0;
 
-	userInterface.Show_GameBegin();
+	userInterface.Show_GameBegins();
 	userInterface.PaintBoard(board);
 	while (referee.UpdateWinState(board) == NoOne) {
 		Player::Step* step = players[currentPlayer]->MakeStep();
@@ -50,14 +115,12 @@ void Game::PlayGame() {
 }
 
 Game::Game() :
-		players { NULL, NULL } {
+		players { NULL, NULL }, server(NULL) {
 }
 
 Game::~Game() {
-	if (players[0])
-		delete players[0];
-	if (players[1])
-		delete players[1];
+	delete players[Player1];
+	delete players[Player2];
 }
 
 /*void Game::TempTestReferee() {
