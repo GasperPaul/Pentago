@@ -4,7 +4,6 @@
  *  Created on: 10 лист. 2013
  *      Author: Gasper
  */
-
 #include "Board.h"
 
 bool Board::putStone(short row, short column, short player) {

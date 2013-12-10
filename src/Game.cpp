@@ -4,7 +4,6 @@
  *  Created on: 10 лист. 2013
  *      Author: Gasper
  */
-
 #include "Game.h"
 #include "Player.h"
 #include "PentagoServer.h"
@@ -17,7 +16,7 @@ Game* Game::Instance() {
 	return instance;
 }
 
-Player* Game::GetPlayer(PlayersNum who) const {
+const Player* Game::GetPlayer(PlayersNum who) const {
 	if (who != PlayerBoth)
 		return players[who];
 	return NULL;
@@ -37,8 +36,10 @@ void Game::Run() {
 			delete players[Player2];
 			players[Player1] = new PlayerLocal(myName);
 			players[Player2] = new PlayerLocal(userInterface.InputPlayerName("player 2"));
-			network.Connect(new Network::RemoteAddress { "127.0.0.1", PentagoServer::DEFAULT_PORT },
-					players, (char)PlayerBoth);
+			Network::RemoteAddress * param = new Network::RemoteAddress;
+			param->addr = "127.0.0.1";
+			param->port = PentagoServer::DEFAULT_PORT;
+			network.Connect(param, players, (char) PlayerBoth);
 			PlayGame();
 			delete server;
 			server = 0;
@@ -49,9 +50,11 @@ void Game::Run() {
 			delete players[Player1];
 			delete players[Player2];
 			players[Player1] = new PlayerLocal(myName);
-			players[Player2] = new PlayerNetwork("Player");
-			iResult = network.Connect(new Network::RemoteAddress { "127.0.0.1",
-					PentagoServer::DEFAULT_PORT }, players, Player1);
+			players[Player2] = new PlayerNetwork("");
+			Network::RemoteAddress * param = new Network::RemoteAddress;
+			param->addr = "127.0.0.1";
+			param->port = PentagoServer::DEFAULT_PORT;
+			iResult = network.Connect(param, players, Player1);
 			if (iResult == 0) {
 				if (network.WaitForConnection()) {
 					PlayGame();
@@ -66,8 +69,9 @@ void Game::Run() {
 			if (userInterface.GetHostAddress(addr)) {
 				delete players[Player2];
 				delete players[Player1];
+				//!important to be ""
+				players[Player1] = new PlayerNetwork("");
 				players[Player2] = new PlayerLocal(myName);
-				players[Player1] = new PlayerNetwork("Player1");
 				iResult = network.Connect(addr, players, Player2);
 				if (iResult == 0) {
 					PlayGame();
@@ -89,23 +93,33 @@ void Game::SetPlayerName(PlayersNum playerNum, const string& name) {
 }
 
 void Game::PlayGame() {
-	short currentPlayer = 0;
-
+	board = Board();
+	currentPlayer = Player1;
 	userInterface.Show_GameBegins();
 	userInterface.PaintBoard(board);
 	while (referee.UpdateWinState(board) == NoOne) {
-		Player::Step* step = players[currentPlayer]->MakeStep();
-		if (step->i < 0) {
-//			std::cout << players[currentPlayer]->Name() << " left the game." << std::endl;
-			break;
-		}
-		while (!board.putStone(step->i, step->j, currentPlayer)) {
-			userInterface.Show_StepIsNotAllowed();
+		bool flag;
+		Player::Step* step;
+		do {
 			step = players[currentPlayer]->MakeStep();
+			if (step->i < 0) {
+				if (step->i < 0) {
+					userInterface.Show_PlayerDisconnected(players[currentPlayer]);
+					break;
+				}
+			}
+			flag = board.putStone(step->i, step->j, currentPlayer);
+			if (!flag) {
+				userInterface.Show_StepIsNotAllowed();
+				delete step;
+			}
+		} while (!flag);
+		if (step->i < 0) {
+			break;
 		}
 		board.Rotate(step->quarter, step->direction);
 		delete step;
-		currentPlayer = currentPlayer ? 0 : 1;
+		currentPlayer = currentPlayer ? Player1 : Player2;
 
 		// displaying the board
 		userInterface.PaintBoard(board);
@@ -114,8 +128,15 @@ void Game::PlayGame() {
 	userInterface.ShowWinner(referee.WinnerIs(), *players);
 }
 
-Game::Game() :
-		players { NULL, NULL }, server(NULL) {
+const Player * Game::GetCurrentPlayer() const {
+	return players[currentPlayer];
+}
+
+Game::Game(){
+	players[0]=NULL;
+	players[1]=NULL;
+	server = NULL;
+	currentPlayer = Player1;
 }
 
 Game::~Game() {

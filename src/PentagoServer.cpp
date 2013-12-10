@@ -4,13 +4,13 @@
  *  Created on: 8 груд. 2013
  *      Author: Youw
  */
-
 #include "PentagoServer.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 
 #include <string.h>
 
@@ -20,10 +20,13 @@ using std::string;
 const std::string PentagoServer::DEFAULT_PORT = "26326";
 const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
+
+//думаю треба винести це в окремий модуль
+//**
 int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 	char recvbuf[PentagoServer::DEFAULT_BUFLEN];
-
-	int iResult = recv(clSocket, recvbuf, sizeof(size_t), 0);
+	int iResult;
+	iResult = recv(clSocket, recvbuf, sizeof(size_t), 0);
 	if (iResult <= 0) {
 		return iResult;
 	}
@@ -33,28 +36,69 @@ int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 		return iResult;
 	}
 	value.resize(((size_t*) recvbuf)[0]);
-	iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), 0);
-	if (iResult <= 0) {
-		return iResult;
+	if ( key.length() > 0 ) {
+		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), 0);
+		if (iResult <= 0) {
+			return iResult;
+		}
 	}
-	iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), 0);
-	if (iResult <= 0) {
-		return iResult;
+	if ( value.length() > 0 ) {
+		iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), 0);
+		if (iResult <= 0) {
+			return iResult;
+		}
 	}
+//	cout << endl << endl << key << ":" << value << endl << endl;
 	return iResult;
 }
+
+int SendStr(string key, string value, SOCKET to) {
+	//TODO: добавити можливітсь відправляти дані довжиною більше ніж DEFAULT_BUFLEN
+	char sendbuf[PentagoServer::DEFAULT_BUFLEN];
+	((size_t*) sendbuf)[0] = key.length();
+	((size_t*) sendbuf)[1] = value.length();
+	memcpy((char*) (((size_t*) sendbuf) + 2), key.c_str(), key.length());
+	memcpy(((char*) (((size_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
+	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(size_t), 0);
+	if (iResult == SOCKET_ERROR) {
+		return WSAGetLastError();
+	}
+	return 0;
+}
+//**
+//
 
 void ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	int iResult;
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(clSocket, key, value)) > 0) {
-			parent->_SendMsgToAll(key,value,clSocket);
+			parent->_SendMsgToAll(key, value, clSocket);
+			if (key == "Player1Name") {
+				parent->Player1Name = value;
+			}
+			if (key == "Player2Name") {
+				parent->Player2Name = value;
+			}
+			if (key == "GetPlayer1Name") {
+				SendStr("Player1Name", parent->Player1Name, clSocket);
+			}
+			if (key == "GetPlayer2Name") {
+				SendStr("Player2Name", parent->Player2Name, clSocket);
+			}
 		} else {
-			parent->_RemClientFromList(clSocket);
-			closesocket(clSocket);
-			//	std::cout << "Player disconnected." << std::endl;
-			//	return WSAGetLastError();
+			//if server is running
+			if (parent->isGood) {
+				//Connection with client lost:
+				parent->_RemClientFromList(clSocket);
+				string value;
+				value.push_back(char(-2));
+				value.push_back(char(-2));
+				value.push_back(char(-2));
+				value.push_back(char(-2));
+				parent->_SendMsgToAll("PlayerStep", value, clSocket);
+				closesocket(clSocket);
+			}
 		}
 	} while (iResult > 0);
 }
@@ -74,25 +118,11 @@ void KeepServerOn(PentagoServer*parent) {
 	}
 }
 
-int SendStr(string key, string value, SOCKET to) {
-	//TODO: добавити можливітсь відправляти дані довжиною більше ніж DEFAULT_BUFLEN
-	char sendbuf[PentagoServer::DEFAULT_BUFLEN];
-	((size_t*) sendbuf)[0] = key.length();
-	((size_t*) sendbuf)[1] = value.length();
-	strcpy((char*) (((size_t*) sendbuf) + 2), key.c_str());
-	strcpy(((char*) (((size_t*) sendbuf) + 2)) + key.length(), value.c_str());
-	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(size_t), 0);
-	if (iResult == SOCKET_ERROR) {
-		return WSAGetLastError();
-	}
-	return 0;
-}
-
 void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET from) {
 	clientsMutex.lock();
 	for (unsigned int i = 0; i < clients.size(); i++) {
 		if (clients[i] != from) {
-			SendStr(key, value, (SOCKET)clients[i]);
+			SendStr(key, value, (SOCKET) clients[i]);
 		}
 	}
 	clientsMutex.unlock();
@@ -110,11 +140,18 @@ void PentagoServer::_AddClientToList(thread* clThread, SOCKET clSocket) {
 void PentagoServer::_RemClientFromList(SOCKET clSocket) {
 	clientsMutex.lock();
 	clientProcessorsMutex.lock();
-
-	//TODO: complete it later
-
-//	clientProcessors.push_back(clThread);
-//	clients.push_back(clSocket);
+	deletedThreadsMutex.lock();
+	vector<SOCKET>::iterator i = clients.begin();
+	vector<thread*>::iterator j = clientProcessors.begin();
+	for (unsigned int counter = 0;counter < clients.size() ; counter++, j++, i++) {
+		if (*i == clSocket) {
+			clients.erase(i);
+			deletedThreads.push_back(*j);
+			clientProcessors.erase(j);
+			break;
+		}
+	}
+	deletedThreadsMutex.unlock();
 	clientProcessorsMutex.unlock();
 	clientsMutex.unlock();
 }
@@ -127,7 +164,7 @@ PentagoServer::PentagoServer(string port) {
 	struct addrinfo *result = NULL;
 	struct addrinfo hints;
 	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		//printf("WSAStartup failed with error: %d\n", iResult);
 		return;
@@ -179,14 +216,27 @@ PentagoServer::PentagoServer(string port) {
 	serv = new thread(KeepServerOn, this);
 }
 
-bool PentagoServer::Good() {
+bool PentagoServer::IsGood() {
 	return isGood;
 }
 
 PentagoServer::~PentagoServer() {
+	isGood = false;
 	closesocket(_ListenSocket);
-	for (unsigned int i = 0; i < clients.size(); i++) {
-		closesocket((SOCKET) clients[i]);
+	clientsMutex.lock();
+	for (vector<SOCKET>::iterator i = clients.begin(); i != clients.end(); i++) {
+		closesocket((SOCKET)*i);
 	}
+	clientsMutex.unlock();
+	deletedThreadsMutex.lock();
+	for (vector<thread*>::iterator i = deletedThreads.begin(); i != deletedThreads.end(); i++) {
+		(*i)->join();
+	}
+	deletedThreadsMutex.unlock();
+	clientProcessorsMutex.lock();
+	for (vector<thread*>::iterator i = clientProcessors.begin(); i != clientProcessors.end(); i++) {
+		(*i)->join();
+	}
+	clientProcessorsMutex.unlock();
 }
 

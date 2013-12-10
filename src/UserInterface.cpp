@@ -26,14 +26,24 @@ Player::Step* UserInterface::GetPlayerStep(const Player* player) {
 	do {
 		cout << "> ";
 		cin >> x >> y >> q >> r;
-		if (x < 0 || y < 0 || q < 0 || r < 0)
-			return new Player::Step { -1, -1, -1, Board::RotateDirection(-1) };
+		if (x < 0 || y < 0 || q < 0 || r < 0) {
+			Player::Step  *result = new Player::Step;
+			result->i = -1;
+			result->j = -1;
+			result->quarter = -1;
+			result->direction = Board::RotateDirection(-1);
+			return result;
+		}
 		invalid = x >= 6 && y >= 6 && q >= 4 && r >= 2;
 		if (invalid)
 			cout << "Invalid input, try again." << endl;
 	} while (invalid);
-
-	return new Player::Step { x, y, q, Board::RotateDirection(r) };
+	Player::Step  *result = new Player::Step;
+	result->i = x;
+	result->j = y;
+	result->quarter = q;
+	result->direction = Board::RotateDirection(r);
+	return result;
 }
 
 void UserInterface::PaintBoard(Board& board) {
@@ -58,7 +68,7 @@ void UserInterface::ShowWinner(winstatus status, Player players[2]) {
 }
 
 void UserInterface::Show_StepIsNotAllowed() {
-
+	cout << endl << "This step is not allowed!" << endl;
 }
 
 void UserInterface::Show_GameBegins() {
@@ -77,13 +87,11 @@ UserInterface::MenuItem UserInterface::MenuDialog() {
 }
 
 std::string UserInterface::InputPlayerName(std::string who) {
-	cout << "Enter " << who << " name: ";
 	std::string name;
-	//в мене піздить екліпс, але компілить запросто
-	std::getline(cin, name);
-	if (name == "") {
-		name = "player";
-	}
+	do {
+		cout << "Enter " << who << " name: ";
+		std::getline(cin, name);
+	} while (name == "");
 	return name;
 }
 
@@ -97,11 +105,25 @@ void UserInterface::_PlayerConnected(const Player* player) {
 
 bool UserInterface::GetHostAddress(Network::RemoteAddress* addr) {
 	cout << "Enter host address: ";
-	getline(cin, addr->addr);
+	addr->addr = "";
+	addr->port = "";
+	while (addr->addr == "") {
+		getline(cin, addr->addr);
+	}
 	cout << "Enter host port (-1 for default): ";
-	getline(cin, addr->port);
+	while (addr->port == "") {
+		getline(cin, addr->port);
+	}
 	if (addr->port == "-1") {
 		addr->port = PentagoServer::DEFAULT_PORT;
 	}
 	return true;
+}
+
+void UserInterface::Show_WaitingForOponentsStep() {
+	cout << "Waiting until player "<< Game::Instance()->GetCurrentPlayer()->GetName() << " makes his move..." << endl;
+}
+
+void UserInterface::Show_PlayerDisconnected(const Player* player) {
+	cout << "Player " << player->GetName() << " left the game." << endl;
 }

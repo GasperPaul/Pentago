@@ -36,7 +36,10 @@ public:
 	//куча анімації, графіки і, обов'язково, вибух
 	void Show_GameBegins();
 
+	void Show_WaitingForOponentsStep();
+
 	//можливо з клави, а може з налаштувань, тощо
+	//!important can't be ""
 	std::string InputPlayerName(std::string who);
 
 	//віконечко з бігунком (викликається з Network)
@@ -44,6 +47,8 @@ public:
 
 	//тут треба закривати віконечко з бігунком, якщо воно відкрите (також викликати з Network)
 	void _PlayerConnected(const Player* player);
+
+	void Show_PlayerDisconnected(const Player* player);
 };
 
 #endif /* USER_INTERFACE_H */

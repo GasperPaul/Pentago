@@ -26,15 +26,19 @@ public:
 	static const string DEFAULT_PORT;
 	PentagoServer(string port);
 	void RunPentagoServer();
-	bool Good();
+	bool IsGood();
 
 	~PentagoServer();
 
 private:
 	vector<SOCKET> clients;
 	vector<thread*> clientProcessors;
+	vector<thread*> deletedThreads;
+	string Player1Name, Player2Name;
 	mutex clientsMutex;
 	mutex clientProcessorsMutex;
+	mutex deletedThreadsMutex;
+
 	bool isGood;
 
 	void _AddClientToList(std::thread* clThread, SOCKET clSocket);

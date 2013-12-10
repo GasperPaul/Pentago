@@ -11,42 +11,72 @@
 extern int ReceiveStr(SOCKET clSocket, string& key, string& value);
 extern int SendStr(string key, string value, SOCKET to);
 
-#include <iostream>
+bool Network::IsConnected() const {
+	return HostSocket != SOCKET_ERROR;
+}
 
-void _KeepConnection(Network*parent) {
+//debug
+/*
+#include <iostream>
+using std::cout;
+using std::endl;
+*/
+
+void _KeepConnection(Network*parent, bool LockWaitMutexForConnection) {
 	int iResult;
+	bool isWaitMutexForConnectionLocked = LockWaitMutexForConnection;
+	if (LockWaitMutexForConnection) {
+		parent->WaitMutexForConnection.lock();
+	}
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(parent->HostSocket, key, value)) > 0) {
-			if (key == "Player1Name") {
+			if (key == "PlayerStep") {
+				parent->StepFromPlayerReceivedMutex.lock();
+				parent->ReceivedStep.i = short(value[0]);
+				parent->ReceivedStep.j = short(value[1]);
+				parent->ReceivedStep.quarter = short(value[2]);
+				parent->ReceivedStep.direction = Board::RotateDirection(value[3]);
+				parent->StepFromPlayerReceived = true;
+				parent->StepFromPlayerReceivedMutex.unlock();
+			} else if (key == "Player1Name") {
 				Game *game = Game::Instance();
 				game->SetPlayerName(Game::Player1, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player1));
+				//TODO: debug
+//				cout << "Come: " << key << ":" << value << endl;
+				;
 				if (!parent->otherPlayerIsConnected) {
 					parent->otherPlayerIsConnected = true;
-					parent->WaitMutexForConnection.unlock();
+					if (isWaitMutexForConnectionLocked) {
+						parent->WaitMutexForConnection.unlock();
+						isWaitMutexForConnectionLocked = false;
+					}
 				}
-			}
-			if (key == "Player2Name") {
+			} else if (key == "Player2Name") {
 				Game *game = Game::Instance();
 				game->SetPlayerName(Game::Player2, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player2));
+				//TODO: debug
+//				cout << "Come: " << key << ":" << value << endl;
 				if (!parent->otherPlayerIsConnected) {
 					parent->otherPlayerIsConnected = true;
-					parent->WaitMutexForConnection.unlock();
+					if (isWaitMutexForConnectionLocked) {
+						parent->WaitMutexForConnection.unlock();
+						isWaitMutexForConnectionLocked = false;
+					}
 				}
+
 			}
-			if (key == "PlayerStep") {
-				parent->StepFromPlayerReceivedMutex.lock();
-				parent->ReceivedStep.i=short(value[0]);
-				parent->ReceivedStep.j=short(value[1]);
-				parent->ReceivedStep.quarter=short(value[2]);
-				parent->ReceivedStep.direction=Board::RotateDirection(value[3]);
-				parent->StepFromPlayerReceived = true;
-				parent->StepFromPlayerReceivedMutex.unlock();
-			}
-			std::cout << key << value << "\n";
 		} else {
+			//Connection with server lost:
+			parent->StepFromPlayerReceivedMutex.lock();
+			parent->ReceivedStep.i = -3;
+			parent->ReceivedStep.j = -3;
+			parent->ReceivedStep.quarter = -3;
+			parent->ReceivedStep.direction = Board::RotateDirection(-3);
+			parent->StepFromPlayerReceived = true;
+			parent->StepFromPlayerReceivedMutex.unlock();
 			closesocket(parent->HostSocket);
 			parent->HostSocket = SOCKET_ERROR;
 		}
@@ -61,32 +91,37 @@ Network::Network() {
 }
 
 Player::Step* Network::GetPlayerStep() {
-	while (!StepFromPlayerReceived);
+	Game::Instance()->userInterface.Show_WaitingForOponentsStep();
+	while (!StepFromPlayerReceived) {
+		std::this_thread::yield();
+		Sleep(1000);
+	}
 	Player::Step* result = new Player::Step;
 	StepFromPlayerReceivedMutex.lock();
 	*result = ReceivedStep;
+	StepFromPlayerReceived = false;
 	StepFromPlayerReceivedMutex.unlock();
 	return result;
 }
 
 int Network::SendPlayerStep(Player::Step* step) {
 	string stepValue;
-	stepValue.resize(4);
-	stepValue[0]=(char)step->i;
-	stepValue[1]=(char)step->j;
-	stepValue[2]=(char)step->quarter;
-	stepValue[3]=(char)step->direction;
-	return SendStr("PlayerStep",stepValue);
+	stepValue.push_back((char) step->i);
+	stepValue.push_back((char) step->j);
+	stepValue.push_back((char) step->quarter);
+	stepValue.push_back((char) step->direction);
+	return SendStr("PlayerStep", stepValue);
 }
 
 int Network::Connect(const RemoteAddress* settings, Player* player[2], char PlayerNum) {
+	StepFromPlayerReceived = false;
 	this->settings = *settings;
 	otherPlayerIsConnected = false;
 	WSADATA wsaData;
 	struct addrinfo *result = NULL, *ptr = NULL, hints;
 	int iResult;
 
-	iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		//	printf("WSAStartup failed with error: %d\n", iResult);
 		return iResult;
@@ -139,33 +174,39 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 	}
 	if (PlayerNum == (char) Game::Player1 || PlayerNum == (char) Game::PlayerBoth) {
 		iResult = SendStr("Player1Name", player[Game::Player1]->GetName());
-		if (iResult == 0) {
-			if (keepConnectionThread && keepConnectionThread->joinable()) {
-				keepConnectionThread->join();
-			}
-		} else {
+		if (iResult != 0) {
 			return iResult;
 		}
 	}
 	if (PlayerNum == (char) Game::Player2 || PlayerNum == (char) Game::PlayerBoth) {
 		iResult = SendStr("Player2Name", player[Game::Player2]->GetName());
-		if (iResult == 0) {
-			if (keepConnectionThread && keepConnectionThread->joinable()) {
-				keepConnectionThread->join();
-			}
-		} else {
+		if (iResult != 0) {
 			return iResult;
 		}
 	}
+	if (keepConnectionThread && keepConnectionThread->joinable()) {
+		keepConnectionThread->join();
+	}
 	delete keepConnectionThread;
 	keepConnectionThread = new thread;
+	bool LockWaitMutexForConnection;
 	if (PlayerNum == (char) Game::Player1) {
-		WaitMutexForConnection.lock();
+		LockWaitMutexForConnection = true;
 		otherPlayerIsConnected = false;
 	} else {
 		otherPlayerIsConnected = true;
+		LockWaitMutexForConnection = false;
 	}
-	*keepConnectionThread = thread(_KeepConnection, this);
+	*keepConnectionThread = thread(_KeepConnection, this, LockWaitMutexForConnection);
+	if (PlayerNum == (char) Game::Player2) {
+		SendStr("GetPlayer1Name", "");
+		Game *game = Game::Instance();
+		while (game->GetPlayer(Game::Player1)->GetName() == "") {
+			std::this_thread::yield();
+			Sleep(100);
+		}
+	}
+	Sleep(500);
 	return iResult;
 }
 

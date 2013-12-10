@@ -6,12 +6,14 @@
 #include <thread>
 #include <string>
 #include <mutex>
+#include <atomic>
 
 #include <winsock2.h>
 
 using std::string;
 using std::thread;
 using std::mutex;
+using std::atomic;
 
 class Network {
 public:
@@ -37,6 +39,7 @@ public:
 
 	//якщо ми хостуємо, почекати товариша
 	bool WaitForConnection();
+	bool IsConnected() const;
 
 private:
 	int SendStr(string key, string value);
@@ -50,7 +53,7 @@ private:
 	thread *keepConnectionThread;
 	bool otherPlayerIsConnected;
 	//for thread; parent: this
-	friend void _KeepConnection(Network*parent);
+	friend void _KeepConnection(Network*parent, bool LockWaitMutexForConnection);
 };
 
 #endif /* NETWORK_H */

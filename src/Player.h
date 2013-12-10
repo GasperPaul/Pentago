@@ -7,7 +7,10 @@
 #define PLAYER_H
 
 #include <string>
+#include <mutex>
+
 using std::string;
+using std::mutex;
 
 #include "Board.h"
 
@@ -25,6 +28,7 @@ public:
 	void SetName(const string name);
 private:
 	string name;
+	mutex PlayerNameAccessMutex;
 };
 
 #endif /* PLAYER_H */
