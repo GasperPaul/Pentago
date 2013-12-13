@@ -1,5 +1,5 @@
 /*
- *  Created on: 10 лист. 2013
+ *  Created on: 10 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 
@@ -8,6 +8,7 @@
 int main(){
 	Game* game = Game::Instance();
 	game->Run();
+	game->~Game();
 	return 0;
 }
 

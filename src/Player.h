@@ -1,5 +1,5 @@
 /*
- *  Created on: 10 лист. 2013
+ *  Created on: 10 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 
@@ -23,7 +23,7 @@ public:
 	};
 	Player(std::string _name = "Player");
 	virtual ~Player();
-	virtual Step* MakeStep();
+	virtual Player::Step MakeStep();
 	string GetName() const;
 	void SetName(const string name);
 private:

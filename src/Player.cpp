@@ -1,5 +1,5 @@
 /*
- *  Created on: 10 лист. 2013
+ *  Created on: 10 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 #include "Player.h"
@@ -17,9 +17,9 @@ void Player::SetName(const string name) {
 //	PlayerNameAccessMutex.unlock();
 }
 
-Player::Step* Player::MakeStep() {
+Player::Step Player::MakeStep() {
 	//virtual method
-	return NULL;
+	return Player::Step();
 }
 
 Player::Player(std::string _name) : name(_name) { }

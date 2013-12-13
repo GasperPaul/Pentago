@@ -6,14 +6,13 @@
 #include <thread>
 #include <string>
 #include <mutex>
-#include <atomic>
 
-#include <winsock2.h>
+#include "SocketIncludes.h"
+#include "CrossThreadMutex.h"
 
 using std::string;
 using std::thread;
 using std::mutex;
-using std::atomic;
 
 class Network {
 public:
@@ -26,18 +25,17 @@ public:
 	Network();
 
 	//wait until player made it's step
-	Player::Step* GetPlayerStep();
+	Player::Step GetPlayerStep();
 	
 	//try send step to network player
 	//if return 0, it's good
-	//must free step
 	int SendPlayerStep(Player::Step* step);
 	
 	//connect and start thread of keeping connection if success
 	//return 0 if success
 	int Connect(const RemoteAddress* settings, Player* player[2], char PlayerNum);
 
-	//якщо ми хостуємо, почекати товариша
+	//пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	bool WaitForConnection();
 	bool IsConnected() const;
 
@@ -46,14 +44,14 @@ private:
 	RemoteAddress settings;
 	SOCKET HostSocket;
 
+	mutex ReceivedStepMutex;
 	Player::Step ReceivedStep;
-	bool StepFromPlayerReceived;
+	CrossThreadMutex 	StepFromPlayerIsReceivedMutex,
+						PlayerIsConnectedWutex;
 
-	mutex WaitMutexForConnection, StepFromPlayerReceivedMutex;
-	thread *keepConnectionThread;
-	bool otherPlayerIsConnected;
+	thread keepConnectionThread;
 	//for thread; parent: this
-	friend void _KeepConnection(Network*parent, bool LockWaitMutexForConnection);
+	friend void _KeepConnection(Network*parent);
 };
 
 #endif /* NETWORK_H */

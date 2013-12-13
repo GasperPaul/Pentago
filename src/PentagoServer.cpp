@@ -1,18 +1,14 @@
 /*
  * PenpagoServer.cpp
  *
- *  Created on: 8 груд. 2013
+ *  Created on: 8 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Youw
  */
 #include "PentagoServer.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
-
 #include <string.h>
+
+#include "CrossThreadMutex.h"
 
 using std::thread;
 using std::string;
@@ -20,8 +16,11 @@ using std::string;
 const std::string PentagoServer::DEFAULT_PORT = "26326";
 const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
+#ifdef DEBUG
+#include "Game.h"
+#endif
 
-//думаю треба винести це в окремий модуль
+//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 //**
 int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 	char recvbuf[PentagoServer::DEFAULT_BUFLEN];
@@ -48,12 +47,14 @@ int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 			return iResult;
 		}
 	}
-//	cout << endl << endl << key << ":" << value << endl << endl;
+#ifdef DEBUG
+	Game::Instance()->userInterface.ShowDebugInfo(("Received: "+key+":"+value).c_str());
+#endif
 	return iResult;
 }
 
 int SendStr(string key, string value, SOCKET to) {
-	//TODO: добавити можливітсь відправляти дані довжиною більше ніж DEFAULT_BUFLEN
+	//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ DEFAULT_BUFLEN
 	char sendbuf[PentagoServer::DEFAULT_BUFLEN];
 	((size_t*) sendbuf)[0] = key.length();
 	((size_t*) sendbuf)[1] = value.length();
@@ -61,7 +62,7 @@ int SendStr(string key, string value, SOCKET to) {
 	memcpy(((char*) (((size_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
 	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(size_t), 0);
 	if (iResult == SOCKET_ERROR) {
-		return WSAGetLastError();
+		return iResult;
 	}
 	return 0;
 }
@@ -114,7 +115,7 @@ void KeepServerOn(PentagoServer*parent) {
 		}
 		thread *thr = new thread;
 		parent->_AddClientToList(thr, ClientSocket);
-		*thr = std::thread(ProcessClient, parent, ClientSocket);
+		*thr = thread(ProcessClient, parent, ClientSocket);
 	}
 }
 
@@ -122,7 +123,7 @@ void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET
 	clientsMutex.lock();
 	for (unsigned int i = 0; i < clients.size(); i++) {
 		if (clients[i] != from) {
-			SendStr(key, value, (SOCKET) clients[i]);
+			SendStr(key, value, SOCKET(clients[i]));
 		}
 	}
 	clientsMutex.unlock();
@@ -159,18 +160,19 @@ void PentagoServer::_RemClientFromList(SOCKET clSocket) {
 PentagoServer::PentagoServer(string port) {
 	isGood = false;
 	_ListenSocket = INVALID_SOCKET;
-	WSADATA wsaData;
 	int iResult;
 	struct addrinfo *result = NULL;
 	struct addrinfo hints;
+#ifdef _WIN32
 	// Initialize Winsock
+	WSADATA wsaData;
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		//printf("WSAStartup failed with error: %d\n", iResult);
 		return;
 	}
-
-	ZeroMemory(&hints, sizeof(hints));
+#endif
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -184,7 +186,7 @@ PentagoServer::PentagoServer(string port) {
 		return;
 	}
 
-	// Create a SOCKET for connecting to server
+	// Create a SOCKET for waiting for clients
 	_ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (_ListenSocket == INVALID_SOCKET) {
 		//printf("socket failed with error: %ld\n", WSAGetLastError());
@@ -212,8 +214,8 @@ PentagoServer::PentagoServer(string port) {
 		//WSACleanup();
 		return;
 	}
+	serv = thread(KeepServerOn, this);
 	isGood = true;
-	serv = new thread(KeepServerOn, this);
 }
 
 bool PentagoServer::IsGood() {
@@ -221,22 +223,48 @@ bool PentagoServer::IsGood() {
 }
 
 PentagoServer::~PentagoServer() {
+#ifdef DEBUG
+	Game * game = Game::Instance();
+	game->userInterface.ShowDebugInfo("Server destructor start");
+#endif
 	isGood = false;
 	closesocket(_ListenSocket);
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor step 1");
+#endif
 	clientsMutex.lock();
-	for (vector<SOCKET>::iterator i = clients.begin(); i != clients.end(); i++) {
-		closesocket((SOCKET)*i);
+	for (unsigned i = 0; i < clients.size(); i++) {
+		closesocket(clients[i]);
 	}
 	clientsMutex.unlock();
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor step 2");
+#endif
 	deletedThreadsMutex.lock();
-	for (vector<thread*>::iterator i = deletedThreads.begin(); i != deletedThreads.end(); i++) {
-		(*i)->join();
+	for (unsigned i = 0; i < deletedThreads.size(); i++) {
+		if (deletedThreads[i]->joinable())
+			deletedThreads[i]->join();
 	}
 	deletedThreadsMutex.unlock();
-	clientProcessorsMutex.lock();
-	for (vector<thread*>::iterator i = clientProcessors.begin(); i != clientProcessors.end(); i++) {
-		(*i)->join();
-	}
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor step 3");
+#endif
+	for (unsigned i = 0; i < clientProcessors.size(); i++) {
+			if (clientProcessors[i]->joinable()) {
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor joining client");
+#endif
+				clientProcessors[i]->join();
+			}
+		}
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor step 4");
+#endif
 	clientProcessorsMutex.unlock();
+	if (serv.joinable())
+		serv.join();
+#ifdef DEBUG
+	game->userInterface.ShowDebugInfo("Server destructor end");
+#endif
 }
 

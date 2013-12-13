@@ -17,32 +17,32 @@ using std::string;
 UserInterface::UserInterface() {
 }
 
-Player::Step* UserInterface::GetPlayerStep(const Player* player) {
+Player::Step UserInterface::GetPlayerStep(const Player* player) {
 	short x, y, q, r;
 	bool invalid = true;
 	cout << player->GetName() << ", make your move: " << endl
-			<< "row | column | quadrant | left=0, right=1 " << endl << "End game — any value < 0."
+			<< "row | column | quadrant | left=0, right=1 " << endl << "End game - any value < 0."
 			<< endl;
 	do {
 		cout << "> ";
 		cin >> x >> y >> q >> r;
 		if (x < 0 || y < 0 || q < 0 || r < 0) {
-			Player::Step  *result = new Player::Step;
-			result->i = -1;
-			result->j = -1;
-			result->quarter = -1;
-			result->direction = Board::RotateDirection(-1);
+			Player::Step result;
+			result.i = -1;
+			result.j = -1;
+			result.quarter = -1;
+			result.direction = Board::RotateDirection(-1);
 			return result;
 		}
 		invalid = x >= 6 && y >= 6 && q >= 4 && r >= 2;
 		if (invalid)
 			cout << "Invalid input, try again." << endl;
 	} while (invalid);
-	Player::Step  *result = new Player::Step;
-	result->i = x;
-	result->j = y;
-	result->quarter = q;
-	result->direction = Board::RotateDirection(r);
+	Player::Step result;
+	result.i = x;
+	result.j = y;
+	result.quarter = q;
+	result.direction = Board::RotateDirection(r);
 	return result;
 }
 
@@ -95,7 +95,7 @@ std::string UserInterface::InputPlayerName(std::string who) {
 	return name;
 }
 
-void UserInterface::_WaitForConnection() {
+void UserInterface::Show_WaitForConnection() {
 	cout << "Waiting for oponent..." << endl;
 }
 
@@ -127,3 +127,9 @@ void UserInterface::Show_WaitingForOponentsStep() {
 void UserInterface::Show_PlayerDisconnected(const Player* player) {
 	cout << "Player " << player->GetName() << " left the game." << endl;
 }
+
+#ifdef DEBUG
+	void UserInterface::ShowDebugInfo(const char* info){
+		cout << endl << "DEBUG: " << info << endl;
+	}
+#endif

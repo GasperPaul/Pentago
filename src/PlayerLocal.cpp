@@ -2,11 +2,8 @@
 
 #include "Game.h"
 
-Player::Step* PlayerLocal::MakeStep() {
-	Game *game = Game::Instance();
-	Player::Step*step = game->userInterface.GetPlayerStep(this);
-	game->network.SendPlayerStep(step);
-	return step;
+Player::Step PlayerLocal::MakeStep() {
+	return Game::Instance()->userInterface.GetPlayerStep(this);
 }
 
 PlayerLocal::PlayerLocal(std::string _name) :

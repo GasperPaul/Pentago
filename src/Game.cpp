@@ -1,7 +1,7 @@
 /*
  * Game.cpp
  *
- *  Created on: 10 лист. 2013
+ *  Created on: 10 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 #include "Game.h"
@@ -36,11 +36,13 @@ void Game::Run() {
 			delete players[Player2];
 			players[Player1] = new PlayerLocal(myName);
 			players[Player2] = new PlayerLocal(userInterface.InputPlayerName("player 2"));
-			Network::RemoteAddress * param = new Network::RemoteAddress;
-			param->addr = "127.0.0.1";
-			param->port = PentagoServer::DEFAULT_PORT;
-			network.Connect(param, players, (char) PlayerBoth);
-			PlayGame();
+			Network::RemoteAddress param;
+			param.addr = "127.0.0.1";
+			param.port = PentagoServer::DEFAULT_PORT;
+			iResult = network.Connect(&param, players, (char) PlayerBoth);
+			if (iResult == 0) {
+					PlayGame();
+			}
 			delete server;
 			server = 0;
 			break;
@@ -91,7 +93,6 @@ void Game::SetPlayerName(PlayersNum playerNum, const string& name) {
 		players[Player2]->SetName(name);
 	}
 }
-
 void Game::PlayGame() {
 	board = Board();
 	currentPlayer = Player1;
@@ -99,26 +100,23 @@ void Game::PlayGame() {
 	userInterface.PaintBoard(board);
 	while (referee.UpdateWinState(board) == NoOne) {
 		bool flag;
-		Player::Step* step;
+		Player::Step step;
 		do {
 			step = players[currentPlayer]->MakeStep();
-			if (step->i < 0) {
-				if (step->i < 0) {
-					userInterface.Show_PlayerDisconnected(players[currentPlayer]);
-					break;
-				}
+			if (step.i < 0) {
+				userInterface.Show_PlayerDisconnected(players[currentPlayer]);
+				break;
 			}
-			flag = board.putStone(step->i, step->j, currentPlayer);
+			flag = board.putStone(step.i, step.j, currentPlayer);
 			if (!flag) {
 				userInterface.Show_StepIsNotAllowed();
-				delete step;
 			}
 		} while (!flag);
-		if (step->i < 0) {
+		if (step.i < 0) {
 			break;
 		}
-		board.Rotate(step->quarter, step->direction);
-		delete step;
+		network.SendPlayerStep(&step);
+		board.Rotate(step.quarter, step.direction);
 		currentPlayer = currentPlayer ? Player1 : Player2;
 
 		// displaying the board

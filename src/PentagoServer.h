@@ -1,7 +1,7 @@
 /*
  * PenpagoServer.h
  *
- *  Created on: 8 груд. 2013
+ *  Created on: 8 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Youw
  */
 
@@ -13,7 +13,7 @@
 #include <vector>
 #include <mutex>
 
-#include <winsock2.h>
+#include "SocketIncludes.h"
 
 using std::string;
 using std::mutex;
@@ -49,6 +49,6 @@ private:
 	friend void KeepServerOn(PentagoServer*parent);
 	friend void ProcessClient(PentagoServer*parent, SOCKET clSocket);
 
-	thread *serv;
+	thread serv;
 };
 #endif /* PENTAGOSERVER_H_ */

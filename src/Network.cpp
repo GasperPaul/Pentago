@@ -2,11 +2,7 @@
 #include "Player.h"
 #include "PentagoServer.h"
 #include "Game.h"
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <cstring>
 
 extern int ReceiveStr(SOCKET clSocket, string& key, string& value);
 extern int SendStr(string key, string value, SOCKET to);
@@ -15,68 +11,39 @@ bool Network::IsConnected() const {
 	return HostSocket != SOCKET_ERROR;
 }
 
-//debug
-/*
-#include <iostream>
-using std::cout;
-using std::endl;
-*/
-
-void _KeepConnection(Network*parent, bool LockWaitMutexForConnection) {
+void _KeepConnection(Network*parent) {
 	int iResult;
-	bool isWaitMutexForConnectionLocked = LockWaitMutexForConnection;
-	if (LockWaitMutexForConnection) {
-		parent->WaitMutexForConnection.lock();
-	}
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(parent->HostSocket, key, value)) > 0) {
 			if (key == "PlayerStep") {
-				parent->StepFromPlayerReceivedMutex.lock();
-				parent->ReceivedStep.i = short(value[0]);
-				parent->ReceivedStep.j = short(value[1]);
-				parent->ReceivedStep.quarter = short(value[2]);
-				parent->ReceivedStep.direction = Board::RotateDirection(value[3]);
-				parent->StepFromPlayerReceived = true;
-				parent->StepFromPlayerReceivedMutex.unlock();
+				parent->ReceivedStepMutex.lock();
+				parent->ReceivedStep.i = short(char(value[0]));
+				parent->ReceivedStep.j = short(char(value[1]));
+				parent->ReceivedStep.quarter = short(char(value[2]));
+				parent->ReceivedStep.direction = Board::RotateDirection(char(value[3]));
+				parent->StepFromPlayerIsReceivedMutex.unlock();
+				parent->ReceivedStepMutex.unlock();
 			} else if (key == "Player1Name") {
 				Game *game = Game::Instance();
 				game->SetPlayerName(Game::Player1, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player1));
-				//TODO: debug
-//				cout << "Come: " << key << ":" << value << endl;
-				;
-				if (!parent->otherPlayerIsConnected) {
-					parent->otherPlayerIsConnected = true;
-					if (isWaitMutexForConnectionLocked) {
-						parent->WaitMutexForConnection.unlock();
-						isWaitMutexForConnectionLocked = false;
-					}
-				}
+				parent->PlayerIsConnectedWutex.unlock();
 			} else if (key == "Player2Name") {
 				Game *game = Game::Instance();
 				game->SetPlayerName(Game::Player2, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player2));
-				//TODO: debug
-//				cout << "Come: " << key << ":" << value << endl;
-				if (!parent->otherPlayerIsConnected) {
-					parent->otherPlayerIsConnected = true;
-					if (isWaitMutexForConnectionLocked) {
-						parent->WaitMutexForConnection.unlock();
-						isWaitMutexForConnectionLocked = false;
-					}
-				}
-
+				parent->PlayerIsConnectedWutex.unlock();
 			}
 		} else {
 			//Connection with server lost:
-			parent->StepFromPlayerReceivedMutex.lock();
+			parent->ReceivedStepMutex.lock();
 			parent->ReceivedStep.i = -3;
 			parent->ReceivedStep.j = -3;
 			parent->ReceivedStep.quarter = -3;
 			parent->ReceivedStep.direction = Board::RotateDirection(-3);
-			parent->StepFromPlayerReceived = true;
-			parent->StepFromPlayerReceivedMutex.unlock();
+			parent->StepFromPlayerIsReceivedMutex.unlock();
+			parent->ReceivedStepMutex.unlock();
 			closesocket(parent->HostSocket);
 			parent->HostSocket = SOCKET_ERROR;
 		}
@@ -85,48 +52,50 @@ void _KeepConnection(Network*parent, bool LockWaitMutexForConnection) {
 
 Network::Network() {
 	HostSocket = INVALID_SOCKET;
-	otherPlayerIsConnected = false;
-	keepConnectionThread = NULL;
-	StepFromPlayerReceived = false;
+	StepFromPlayerIsReceivedMutex = CrossThreadMutex(true); //locked: no step received yet
+	PlayerIsConnectedWutex = CrossThreadMutex(true);// locked: no player in the same game yet;
 }
 
-Player::Step* Network::GetPlayerStep() {
+Player::Step Network::GetPlayerStep() {
 	Game::Instance()->userInterface.Show_WaitingForOponentsStep();
-	while (!StepFromPlayerReceived) {
-		std::this_thread::yield();
-		Sleep(1000);
-	}
-	Player::Step* result = new Player::Step;
-	StepFromPlayerReceivedMutex.lock();
-	*result = ReceivedStep;
-	StepFromPlayerReceived = false;
-	StepFromPlayerReceivedMutex.unlock();
+
+	StepFromPlayerIsReceivedMutex.wait();
+
+	Player::Step result;
+	ReceivedStepMutex.lock();
+	result = ReceivedStep;
+	ReceivedStepMutex.unlock();
 	return result;
 }
 
 int Network::SendPlayerStep(Player::Step* step) {
 	string stepValue;
-	stepValue.push_back((char) step->i);
-	stepValue.push_back((char) step->j);
-	stepValue.push_back((char) step->quarter);
-	stepValue.push_back((char) step->direction);
+	stepValue.resize(4);
+	stepValue[0] = (char) step->i;
+	stepValue[1] = (char) step->j;
+	stepValue[2] = (char) step->quarter;
+	stepValue[3] = (char) step->direction;
 	return SendStr("PlayerStep", stepValue);
 }
 
 int Network::Connect(const RemoteAddress* settings, Player* player[2], char PlayerNum) {
-	StepFromPlayerReceived = false;
+	PlayerIsConnectedWutex.try_lock();
+	StepFromPlayerIsReceivedMutex.try_lock();
+
 	this->settings = *settings;
-	otherPlayerIsConnected = false;
-	WSADATA wsaData;
+
 	struct addrinfo *result = NULL, *ptr = NULL, hints;
 	int iResult;
 
+#ifdef _WIN32
+	WSADATA wsaData;
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
 		//	printf("WSAStartup failed with error: %d\n", iResult);
 		return iResult;
 	}
-	ZeroMemory( &hints, sizeof(hints) );
+#endif
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
@@ -152,7 +121,11 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 		if (HostSocket == INVALID_SOCKET) {
 //			printf("socket failed with error: %ld\n", WSAGetLastError());
 //			WSACleanup();
+#ifdef _WIN32
 			return WSAGetLastError();
+#elif __linux__
+			return -1;
+#endif
 		}
 
 		// Connect to server.
@@ -172,59 +145,38 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 //		WSACleanup();
 		return 1;
 	}
-	if (PlayerNum == (char) Game::Player1 || PlayerNum == (char) Game::PlayerBoth) {
+
+	if ((PlayerNum == (char) Game::Player1) || (PlayerNum == (char) Game::PlayerBoth)) {
 		iResult = SendStr("Player1Name", player[Game::Player1]->GetName());
 		if (iResult != 0) {
 			return iResult;
 		}
 	}
-	if (PlayerNum == (char) Game::Player2 || PlayerNum == (char) Game::PlayerBoth) {
+	if ((PlayerNum == (char) Game::Player2) || (PlayerNum == (char) Game::PlayerBoth)) {
 		iResult = SendStr("Player2Name", player[Game::Player2]->GetName());
 		if (iResult != 0) {
 			return iResult;
 		}
 	}
-	if (keepConnectionThread && keepConnectionThread->joinable()) {
-		keepConnectionThread->join();
+	if (keepConnectionThread.joinable()) {
+			keepConnectionThread.join();
 	}
-	delete keepConnectionThread;
-	keepConnectionThread = new thread;
-	bool LockWaitMutexForConnection;
-	if (PlayerNum == (char) Game::Player1) {
-		LockWaitMutexForConnection = true;
-		otherPlayerIsConnected = false;
-	} else {
-		otherPlayerIsConnected = true;
-		LockWaitMutexForConnection = false;
-	}
-	*keepConnectionThread = thread(_KeepConnection, this, LockWaitMutexForConnection);
+	keepConnectionThread = thread(_KeepConnection, this);
 	if (PlayerNum == (char) Game::Player2) {
-		SendStr("GetPlayer1Name", "");
-		Game *game = Game::Instance();
-		while (game->GetPlayer(Game::Player1)->GetName() == "") {
-			std::this_thread::yield();
-			Sleep(100);
-		}
+		SendStr("GetPlayer1Name", "NULL");
+		PlayerIsConnectedWutex.try_lock();
+		PlayerIsConnectedWutex.wait();
 	}
-	Sleep(500);
-	return iResult;
+	return 0;
 }
 
 int Network::SendStr(string key, string value) {
 	return ::SendStr(key, value, HostSocket);
 }
 
-void ThreadMutexWait(mutex*m) {
-	m->lock();
-	m->unlock();
-}
-
 bool Network::WaitForConnection() {
-	Game *game = Game::Instance();
-	game->userInterface._WaitForConnection();
-	if (!otherPlayerIsConnected) {
-		thread waitThread = thread(ThreadMutexWait, &WaitMutexForConnection);
-		waitThread.join();
-	}
+	Game::Instance()->userInterface.Show_WaitForConnection();
+	//TODO: no logic: repair later
+	PlayerIsConnectedWutex.wait();
 	return true;
 }

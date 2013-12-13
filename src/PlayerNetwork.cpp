@@ -2,7 +2,7 @@
 
 #include "Game.h"
 
-Player::Step* PlayerNetwork::MakeStep(){
+Player::Step PlayerNetwork::MakeStep(){
 	return Game::Instance()->network.GetPlayerStep();
 }
 

@@ -8,7 +8,7 @@
 class PlayerLocal: public Player {
 public:
 	PlayerLocal(std::string _name = "Player");
-	Step* MakeStep();
+	Step MakeStep();
 };
 
 #endif /* PLAYER_LOCAL_H */

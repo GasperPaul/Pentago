@@ -8,7 +8,7 @@
 class PlayerNetwork: public Player {
 public:
 	PlayerNetwork(std::string _name = "Player");
-	Step* MakeStep();
+	Step MakeStep();
 };
 
 #endif /* PLAYER_NETWORK_H */

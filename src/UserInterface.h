@@ -15,7 +15,7 @@ public:
 	UserInterface();
 
 	//wait until player made it's step
-	Player::Step* GetPlayerStep(const Player* player);
+	Player::Step GetPlayerStep(const Player* player);
 	
 	//obviously
 	void PaintBoard(Board& board);
@@ -26,29 +26,33 @@ public:
 	//obviously too
 	void Show_StepIsNotAllowed();
 	
-	//показати початкову менюшку
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	MenuItem MenuDialog();
 
-	//показати менюшку з вибором адреси хоста
-	//колись можна написати автоматичний пошук по локальній мережі
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	//пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 	bool GetHostAddress(Network::RemoteAddress* addr);
 
-	//куча анімації, графіки і, обов'язково, вибух
+	//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ, пїЅпїЅпїЅпїЅ'пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ
 	void Show_GameBegins();
 
 	void Show_WaitingForOponentsStep();
 
-	//можливо з клави, а може з налаштувань, тощо
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ
 	//!important can't be ""
 	std::string InputPlayerName(std::string who);
 
-	//віконечко з бігунком (викликається з Network)
-	void _WaitForConnection();
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Network)
+	void Show_WaitForConnection();
 
-	//тут треба закривати віконечко з бігунком, якщо воно відкрите (також викликати з Network)
+	//пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Network)
 	void _PlayerConnected(const Player* player);
 
 	void Show_PlayerDisconnected(const Player* player);
+
+#ifdef DEBUG
+	void ShowDebugInfo(const char* info);
+#endif
 };
 
 #endif /* USER_INTERFACE_H */
