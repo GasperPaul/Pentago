@@ -50,8 +50,9 @@ public:
 
 	void Show_PlayerDisconnected(const Player* player);
 
-	//debug
+#ifdef DEBUG
 	void ShowDebugInfo(const char* info);
+#endif
 };
 
 #endif /* USER_INTERFACE_H */

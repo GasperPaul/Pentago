@@ -132,7 +132,8 @@ void UserInterface::Show_PlayerDisconnected(const Player* player) {
 	cout << "Player " << player->GetName() << " left the game." << endl;
 }
 
-//debug
+#ifdef DEBUG
 void UserInterface::ShowDebugInfo(const char* info){
 	cout << endl << "DEBUG: " << info << endl;
 }
+#endif

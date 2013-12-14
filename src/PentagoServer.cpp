@@ -17,8 +17,8 @@ const std::string PentagoServer::DEFAULT_PORT = "26326";
 const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
 //debug
-#include "Game.h"
 #ifdef DEBUG
+#include "Game.h"
 #include <iostream>
 #include <sstream>
 #endif
@@ -113,6 +113,7 @@ void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 				value.push_back(char(-2));
 				value.push_back(char(-2));
 				parent->_SendMsgToAll("PlayerStep", value, clSocket);
+				shutdown(clSocket, SD_BOTH);
 				closesocket(clSocket);
 			}
 		}
@@ -120,20 +121,18 @@ void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 }
 
 void PentagoServer::KeepServerOn(PentagoServer*parent) {
-	Game * game = Game::Instance();
 	while (parent->isGood) {
 		SOCKET ClientSocket = accept(parent->_ListenSocket, NULL, NULL);
 		if (ClientSocket == INVALID_SOCKET) {
-			if (parent->isGood)
+			if (parent->isGood) {
+				shutdown(parent->_ListenSocket, SD_BOTH);
 				closesocket(parent->_ListenSocket);
-			game->userInterface.ShowDebugInfo("Server: listen error");
+			}
 			parent->isGood = false;
 			break;
 		}
-		game->userInterface.ShowDebugInfo("Server: client connected");
 		parent->_AddClientToList(new thread(ProcessClient, parent, ClientSocket), ClientSocket);
 	}
-	game->userInterface.ShowDebugInfo("Server: listen closing");
 }
 
 void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET from) {
@@ -240,21 +239,14 @@ bool PentagoServer::IsGood() {
 }
 
 void PentagoServer::CloseServer() {
-
-	Game * game = Game::Instance();
-	//debug
-	game->userInterface.ShowDebugInfo("Server close 1");
-
 	isGood = false;
-	closesocket(_ListenSocket);
 	_SendMsgToAll("ServerClosing","",-10);
-	game->userInterface.ShowDebugInfo("Server close 2");
 	clientsMutex.lock();
 	for (unsigned i = 0; i < clients.size(); i++) {
+		shutdown(clients[i], SD_BOTH);
 		closesocket(clients[i]);
 	}
 	clientsMutex.unlock();
-	game->userInterface.ShowDebugInfo("Server close 3");
 	deletedThreadsMutex.lock();
 	for (unsigned i = 0; i < deletedThreads.size(); i++) {
 		if (deletedThreads[i]->joinable())
@@ -262,29 +254,21 @@ void PentagoServer::CloseServer() {
 			delete deletedThreads[i];
 	}
 	deletedThreadsMutex.unlock();
-	//Sleep(1000);
-	game->userInterface.ShowDebugInfo("Server close 4");
 	clientProcessorsMutex.lock();
 	for (unsigned i = 0; i < clientProcessors.size(); i++) {
 		if (clientProcessors[i]->joinable()) {
-			game->userInterface.ShowDebugInfo("Server close join");
 			clientProcessors[i]->join();
 			delete clientProcessors[i];
 		}
 	}
 	clientProcessorsMutex.unlock();
-	game->userInterface.ShowDebugInfo("Server close 5");
+	shutdown(_ListenSocket, SD_BOTH);
+	closesocket(_ListenSocket);
 	if (serv.joinable())
 		serv.join();
-	game->userInterface.ShowDebugInfo("Server closed");
 }
 
 PentagoServer::~PentagoServer() {
-#ifdef DEBUG
-	Game * game = Game::Instance();
-	game->userInterface.ShowDebugInfo("Server destructor start");
-#endif
-	if (isGood)
-		CloseServer();
+	CloseServer();
 }
 
