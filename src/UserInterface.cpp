@@ -105,21 +105,21 @@ void UserInterface::_PlayerConnected(const Player* player) {
 	cout << "Player \"" << player->GetName() << "\" connected." << endl;
 }
 
-bool UserInterface::GetHostAddress(Network::RemoteAddress* addr) {
+bool UserInterface::GetHostAddress(Network::RemoteAddress& addr) {
 	cout << "Enter host address: ";
-	addr->addr = "";
-	addr->port = "";
-	while (addr->addr == "") {
+	addr.addr = "";
+	addr.port = "";
+	while (addr.addr == "") {
 		cin.clear();
-		getline(cin, addr->addr);
+		getline(cin, addr.addr);
 	}
 	cout << "Enter host port (-1 for default): ";
-	while (addr->port == "") {
+	while (addr.port == "") {
 		cin.clear();
-		getline(cin, addr->port);
+		getline(cin, addr.port);
 	}
-	if (addr->port == "-1") {
-		addr->port = PentagoServer::DEFAULT_PORT;
+	if (addr.port == "-1") {
+		addr.port = PentagoServer::DEFAULT_PORT;
 	}
 	return true;
 }

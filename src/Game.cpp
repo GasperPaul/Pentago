@@ -43,6 +43,7 @@ void Game::Run() {
 			if (iResult == 0) {
 					PlayGame();
 			}
+			server->CloseServer();
 			delete server;
 			server = 0;
 			break;
@@ -68,19 +69,18 @@ void Game::Run() {
 			break;
 		}
 		case UserInterface::ConnectToServer: {
-			Network::RemoteAddress* addr = new Network::RemoteAddress;
+			Network::RemoteAddress addr;
 			if (userInterface.GetHostAddress(addr)) {
 				delete players[Player2];
 				delete players[Player1];
 				//!important to be ""
 				players[Player1] = new PlayerNetwork("");
 				players[Player2] = new PlayerLocal(myName);
-				iResult = network.Connect(addr, players, Player2);
+				iResult = network.Connect(&addr, players, Player2);
 				if (iResult == 0) {
 					PlayGame();
 				}
 			}
-			delete addr;
 			break;
 		}
 		}
@@ -113,11 +113,11 @@ void Game::PlayGame() {
 				userInterface.Show_StepIsNotAllowed();
 			}
 		} while (!flag);
+		if (players[currentPlayer]->GetPlayerType() == 0)
+			network.SendPlayerStep(&step);
 		if (step.i < 0) {
 			break;
 		}
-		if (players[currentPlayer]->GetPlayerType() == 0)
-			network.SendPlayerStep(&step);
 		board.Rotate(step.quarter, step.direction);
 		currentPlayer = currentPlayer ? Player1 : Player2;
 

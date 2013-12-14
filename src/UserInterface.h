@@ -31,7 +31,7 @@ public:
 
 	//�������� ������� � ������� ������ �����
 	//������ ����� �������� ������������ ����� �� �������� �����
-	bool GetHostAddress(Network::RemoteAddress* addr);
+	bool GetHostAddress(Network::RemoteAddress& addr);
 
 	//���� �������, ������� �, ����'������, �����
 	void Show_GameBegins();

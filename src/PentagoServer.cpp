@@ -120,17 +120,20 @@ void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 }
 
 void PentagoServer::KeepServerOn(PentagoServer*parent) {
+	Game * game = Game::Instance();
 	while (parent->isGood) {
 		SOCKET ClientSocket = accept(parent->_ListenSocket, NULL, NULL);
 		if (ClientSocket == INVALID_SOCKET) {
-			//printf("accept failed with error: %d\n", WSAGetLastError());
-			closesocket(parent->_ListenSocket);
-			//WSACleanup();
+			if (parent->isGood)
+				closesocket(parent->_ListenSocket);
+			game->userInterface.ShowDebugInfo("Server: listen error");
 			parent->isGood = false;
 			break;
 		}
+		game->userInterface.ShowDebugInfo("Server: client connected");
 		parent->_AddClientToList(new thread(ProcessClient, parent, ClientSocket), ClientSocket);
 	}
+	game->userInterface.ShowDebugInfo("Server: listen closing");
 }
 
 void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET from) {
