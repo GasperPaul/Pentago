@@ -18,4 +18,5 @@
 #define INVALID_SOCKET (~0)
 #define SOCKET int
 #define closesocket(x) close(x)
+#define SD_BOTH 2
 #endif //_WIN32

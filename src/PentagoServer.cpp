@@ -16,8 +16,9 @@ using std::string;
 const std::string PentagoServer::DEFAULT_PORT = "26326";
 const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
-#ifdef DEBUG
+//debug
 #include "Game.h"
+#ifdef DEBUG
 #include <iostream>
 #include <sstream>
 #endif
@@ -37,13 +38,13 @@ int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 		return iResult;
 	}
 	value.resize(((size_t*) recvbuf)[0]);
-	if ( key.length() > 0 ) {
+	if (key.length() > 0) {
 		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), 0);
 		if (iResult <= 0) {
 			return iResult;
 		}
 	}
-	if ( value.length() > 0 ) {
+	if (value.length() > 0) {
 		iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), 0);
 		if (iResult <= 0) {
 			return iResult;
@@ -71,7 +72,7 @@ int SendStr(string key, string value, SOCKET to) {
 //**
 //
 
-void ProcessClient(PentagoServer*parent, SOCKET clSocket) {
+void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	int iResult;
 	string key, value;
 	do {
@@ -79,8 +80,8 @@ void ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 #ifdef DEBUG
 			std::stringstream a;
 			int b = (int)clSocket;
-			
-			sockaddr_in  addr = {0};
+
+			sockaddr_in addr = {0};
 			int *size = new int;
 			*size = sizeof(addr);
 			getpeername(clSocket,(sockaddr*)&addr,size);
@@ -118,18 +119,17 @@ void ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	} while (iResult > 0);
 }
 
-void KeepServerOn(PentagoServer*parent) {
-	while (true) {
+void PentagoServer::KeepServerOn(PentagoServer*parent) {
+	while (parent->isGood) {
 		SOCKET ClientSocket = accept(parent->_ListenSocket, NULL, NULL);
 		if (ClientSocket == INVALID_SOCKET) {
 			//printf("accept failed with error: %d\n", WSAGetLastError());
 			closesocket(parent->_ListenSocket);
 			//WSACleanup();
+			parent->isGood = false;
 			break;
 		}
-		thread *thr = new thread;
-		parent->_AddClientToList(thr, ClientSocket);
-		*thr = thread(ProcessClient, parent, ClientSocket);
+		parent->_AddClientToList(new thread(ProcessClient, parent, ClientSocket), ClientSocket);
 	}
 }
 
@@ -158,7 +158,7 @@ void PentagoServer::_RemClientFromList(SOCKET clSocket) {
 	deletedThreadsMutex.lock();
 	vector<SOCKET>::iterator i = clients.begin();
 	vector<thread*>::iterator j = clientProcessors.begin();
-	for (unsigned int counter = 0;counter < clients.size() ; counter++, j++, i++) {
+	for (unsigned int counter = 0; counter < clients.size(); counter++, j++, i++) {
 		if (*i == clSocket) {
 			clients.erase(i);
 			deletedThreads.push_back(*j);
@@ -228,12 +228,52 @@ PentagoServer::PentagoServer(string port) {
 		//WSACleanup();
 		return;
 	}
-	serv = thread(KeepServerOn, this);
 	isGood = true;
+	serv = thread(KeepServerOn, this);
 }
 
 bool PentagoServer::IsGood() {
 	return isGood;
+}
+
+void PentagoServer::CloseServer() {
+
+	Game * game = Game::Instance();
+	//debug
+	game->userInterface.ShowDebugInfo("Server close 1");
+
+	isGood = false;
+	closesocket(_ListenSocket);
+	_SendMsgToAll("ServerClosing","",-10);
+	game->userInterface.ShowDebugInfo("Server close 2");
+	clientsMutex.lock();
+	for (unsigned i = 0; i < clients.size(); i++) {
+		closesocket(clients[i]);
+	}
+	clientsMutex.unlock();
+	game->userInterface.ShowDebugInfo("Server close 3");
+	deletedThreadsMutex.lock();
+	for (unsigned i = 0; i < deletedThreads.size(); i++) {
+		if (deletedThreads[i]->joinable())
+			deletedThreads[i]->join();
+			delete deletedThreads[i];
+	}
+	deletedThreadsMutex.unlock();
+	//Sleep(1000);
+	game->userInterface.ShowDebugInfo("Server close 4");
+	clientProcessorsMutex.lock();
+	for (unsigned i = 0; i < clientProcessors.size(); i++) {
+		if (clientProcessors[i]->joinable()) {
+			game->userInterface.ShowDebugInfo("Server close join");
+			clientProcessors[i]->join();
+			delete clientProcessors[i];
+		}
+	}
+	clientProcessorsMutex.unlock();
+	game->userInterface.ShowDebugInfo("Server close 5");
+	if (serv.joinable())
+		serv.join();
+	game->userInterface.ShowDebugInfo("Server closed");
 }
 
 PentagoServer::~PentagoServer() {
@@ -241,45 +281,7 @@ PentagoServer::~PentagoServer() {
 	Game * game = Game::Instance();
 	game->userInterface.ShowDebugInfo("Server destructor start");
 #endif
-	isGood = false;
-	closesocket(_ListenSocket);
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor step 1");
-#endif
-	clientsMutex.lock();
-	for (unsigned i = 0; i < clients.size(); i++) {
-		closesocket(clients[i]);
-	}
-	clientsMutex.unlock();
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor step 2");
-#endif
-	deletedThreadsMutex.lock();
-	for (unsigned i = 0; i < deletedThreads.size(); i++) {
-		if (deletedThreads[i]->joinable())
-			deletedThreads[i]->join();
-	}
-	deletedThreadsMutex.unlock();
-	clientProcessorsMutex.lock();
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor step 3");
-#endif
-	for (unsigned i = 0; i < clientProcessors.size(); i++) {
-			if (clientProcessors[i]->joinable()) {
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor joining client");
-#endif
-				clientProcessors[i]->join();
-			}
-		}
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor step 4");
-#endif
-	clientProcessorsMutex.unlock();
-	if (serv.joinable())
-		serv.join();
-#ifdef DEBUG
-	game->userInterface.ShowDebugInfo("Server destructor end");
-#endif
+	if (isGood)
+		CloseServer();
 }
 

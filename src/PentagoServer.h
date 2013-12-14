@@ -27,7 +27,7 @@ public:
 	PentagoServer(string port);
 	void RunPentagoServer();
 	bool IsGood();
-
+	void CloseServer();
 	~PentagoServer();
 
 private:
@@ -46,8 +46,8 @@ private:
 	void _SendMsgToAll(const string& key, const string& value, SOCKET from);
 	SOCKET _ListenSocket;
 
-	friend void KeepServerOn(PentagoServer*parent);
-	friend void ProcessClient(PentagoServer*parent, SOCKET clSocket);
+	static void KeepServerOn(PentagoServer*parent);
+	static void ProcessClient(PentagoServer*parent, SOCKET clSocket);
 
 	thread serv;
 };

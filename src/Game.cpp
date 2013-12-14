@@ -62,6 +62,7 @@ void Game::Run() {
 					PlayGame();
 				}
 			}
+			server->CloseServer();
 			delete server;
 			server = 0;
 			break;

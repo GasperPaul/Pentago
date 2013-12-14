@@ -26,6 +26,8 @@ int Player::GetPlayerType() {
 	return playerType;
 }
 
-Player::Player(std::string _name) : name(_name), playerType(-1) { }
+Player::Player(std::string _name) : name(_name) {
+	playerType = -1;
+}
 Player::~Player() { }
 
