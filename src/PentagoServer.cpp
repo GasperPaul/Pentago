@@ -28,24 +28,24 @@ const int PentagoServer::DEFAULT_BUFLEN = 1024;
 int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 	char recvbuf[PentagoServer::DEFAULT_BUFLEN];
 	int iResult;
-	iResult = recv(clSocket, recvbuf, sizeof(size_t), 0);
+	iResult = recv(clSocket, recvbuf, sizeof(int32_t), MSG_WAITALL);
 	if (iResult <= 0) {
 		return iResult;
 	}
-	key.resize(((size_t*) recvbuf)[0]);
-	iResult = recv(clSocket, recvbuf, sizeof(size_t), 0);
+	key.resize(((int32_t*) recvbuf)[0]);
+	iResult = recv(clSocket, recvbuf, sizeof(int32_t), MSG_WAITALL);
 	if (iResult <= 0) {
 		return iResult;
 	}
-	value.resize(((size_t*) recvbuf)[0]);
+	value.resize(((int32_t*) recvbuf)[0]);
 	if (key.length() > 0) {
-		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), 0);
+		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), MSG_WAITALL);
 		if (iResult <= 0) {
 			return iResult;
 		}
 	}
 	if (value.length() > 0) {
-		iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), 0);
+		iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), MSG_WAITALL);
 		if (iResult <= 0) {
 			return iResult;
 		}
@@ -59,11 +59,11 @@ int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 int SendStr(string key, string value, SOCKET to) {
 	//TODO: �������� ��������� ���������� ��� �������� ����� �� DEFAULT_BUFLEN
 	char sendbuf[PentagoServer::DEFAULT_BUFLEN];
-	((size_t*) sendbuf)[0] = key.length();
-	((size_t*) sendbuf)[1] = value.length();
-	memcpy((char*) (((size_t*) sendbuf) + 2), key.c_str(), key.length());
-	memcpy(((char*) (((size_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
-	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(size_t), 0);
+	((int32_t*) sendbuf)[0] = key.length();
+	((int32_t*) sendbuf)[1] = value.length();
+	memcpy((char*) (((int32_t*) sendbuf) + 2), key.c_str(), key.length());
+	memcpy(((char*) (((int32_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
+	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(int32_t), 0);
 	if (iResult == SOCKET_ERROR) {
 		return iResult;
 	}
