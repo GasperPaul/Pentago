@@ -21,7 +21,7 @@ public:
 	void PaintBoard(Board& board);
 	
 	//obviously too
-	void ShowWinner(winstatus status,Player players[2]);
+	void ShowWinner(winstatus status,Player* players[2]);
 	
 	//obviously too
 	void Show_StepIsNotAllowed();
@@ -50,7 +50,7 @@ public:
 
 	void Show_PlayerDisconnected(const Player* player);
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	void ShowDebugInfo(const char* info);
 #endif
 };

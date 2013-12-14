@@ -24,8 +24,12 @@ public:
 	Player(std::string _name = "Player");
 	virtual ~Player();
 	virtual Player::Step MakeStep();
+
 	string GetName() const;
 	void SetName(const string name);
+	int GetPlayerType();
+protected:
+	int playerType;
 private:
 	string name;
 	mutex PlayerNameAccessMutex;

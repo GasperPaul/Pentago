@@ -18,6 +18,8 @@ const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
 #ifdef DEBUG
 #include "Game.h"
+#include <iostream>
+#include <sstream>
 #endif
 
 //����� ����� ������� �� � ������� ������
@@ -74,17 +76,29 @@ void ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(clSocket, key, value)) > 0) {
-			parent->_SendMsgToAll(key, value, clSocket);
-			if (key == "Player1Name") {
+#ifdef DEBUG
+			std::stringstream a;
+			int b = (int)clSocket;
+			
+			sockaddr_in  addr = {0};
+			int *size = new int;
+			*size = sizeof(addr);
+			getpeername(clSocket,(sockaddr*)&addr,size);
+			delete size;
+			a << "port: " << htons(addr.sin_port) << "|socket:" << b << "| " << key << ":" << value;
+			Game::Instance()->userInterface.ShowDebugInfo(a.str().c_str());
+#endif
+			if (key == "PlayerStep") {
+				parent->_SendMsgToAll(key, value, clSocket);
+			} else if (key == "Player1Name") {
 				parent->Player1Name = value;
-			}
-			if (key == "Player2Name") {
+				parent->_SendMsgToAll(key, value, clSocket);
+			} else if (key == "Player2Name") {
 				parent->Player2Name = value;
-			}
-			if (key == "GetPlayer1Name") {
+				parent->_SendMsgToAll(key, value, clSocket);
+			} else if (key == "GetPlayer1Name") {
 				SendStr("Player1Name", parent->Player1Name, clSocket);
-			}
-			if (key == "GetPlayer2Name") {
+			} else if (key == "GetPlayer2Name") {
 				SendStr("Player2Name", parent->Player2Name, clSocket);
 			}
 		} else {
@@ -123,7 +137,7 @@ void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET
 	clientsMutex.lock();
 	for (unsigned int i = 0; i < clients.size(); i++) {
 		if (clients[i] != from) {
-			SendStr(key, value, SOCKET(clients[i]));
+			SendStr(key, value, clients[i]);
 		}
 	}
 	clientsMutex.unlock();
@@ -246,6 +260,7 @@ PentagoServer::~PentagoServer() {
 			deletedThreads[i]->join();
 	}
 	deletedThreadsMutex.unlock();
+	clientProcessorsMutex.lock();
 #ifdef DEBUG
 	game->userInterface.ShowDebugInfo("Server destructor step 3");
 #endif

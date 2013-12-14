@@ -6,10 +6,12 @@
  */
 
 #include "CrossThreadMutex.h"
-#ifdef __linux__
+#ifdef _WIN32
+#include <windows.h>
+#elif __linux__//_WIN32
 #include <unistd.h>
 #define Sleep(x) usleep(x*1000)
-#endif
+#endif //_WIN32
 
 
 

@@ -22,6 +22,10 @@ Player::Step Player::MakeStep() {
 	return Player::Step();
 }
 
-Player::Player(std::string _name) : name(_name) { }
+int Player::GetPlayerType() {
+	return playerType;
+}
+
+Player::Player(std::string _name) : name(_name), playerType(-1) { }
 Player::~Player() { }
 

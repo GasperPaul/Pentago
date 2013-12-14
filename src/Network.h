@@ -23,6 +23,7 @@ public:
 	};
 
 	Network();
+	virtual ~Network();
 
 	//wait until player made it's step
 	Player::Step GetPlayerStep();
@@ -51,7 +52,7 @@ private:
 
 	thread keepConnectionThread;
 	//for thread; parent: this
-	friend void _KeepConnection(Network*parent);
+	static void _KeepConnection(Network*parent);
 };
 
 #endif /* NETWORK_H */

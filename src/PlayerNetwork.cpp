@@ -8,5 +8,6 @@ Player::Step PlayerNetwork::MakeStep(){
 
 PlayerNetwork::PlayerNetwork(std::string _name) :
 		Player(_name) {
+	playerType = 1;
 }
 

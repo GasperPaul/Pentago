@@ -115,7 +115,8 @@ void Game::PlayGame() {
 		if (step.i < 0) {
 			break;
 		}
-		network.SendPlayerStep(&step);
+		if (players[currentPlayer]->GetPlayerType() == 0)
+			network.SendPlayerStep(&step);
 		board.Rotate(step.quarter, step.direction);
 		currentPlayer = currentPlayer ? Player1 : Player2;
 
@@ -123,7 +124,7 @@ void Game::PlayGame() {
 		userInterface.PaintBoard(board);
 	}
 
-	userInterface.ShowWinner(referee.WinnerIs(), *players);
+	userInterface.ShowWinner(referee.WinnerIs(), players);
 }
 
 const Player * Game::GetCurrentPlayer() const {

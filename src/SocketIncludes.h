@@ -3,7 +3,12 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#elif __linux__
+#ifdef _MSC_VER 
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+#endif //_MSC_VER
+#elif __linux__ //_WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,4 +18,4 @@
 #define INVALID_SOCKET (~0)
 #define SOCKET int
 #define closesocket(x) close(x)
-#endif
+#endif //_WIN32

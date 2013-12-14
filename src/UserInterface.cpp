@@ -7,12 +7,12 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
-#include <climits>
 
 using std::cout;
 using std::cin;
 using std::endl;
 using std::string;
+using std::getline;
 
 UserInterface::UserInterface() {
 }
@@ -25,6 +25,7 @@ Player::Step UserInterface::GetPlayerStep(const Player* player) {
 			<< endl;
 	do {
 		cout << "> ";
+		cin.clear();
 		cin >> x >> y >> q >> r;
 		if (x < 0 || y < 0 || q < 0 || r < 0) {
 			Player::Step result;
@@ -57,13 +58,13 @@ void UserInterface::PaintBoard(Board& board) {
 	cout << "-------------------------" << endl << endl;
 }
 
-void UserInterface::ShowWinner(winstatus status, Player players[2]) {
+void UserInterface::ShowWinner(winstatus status, Player* players[2]) {
 	if (status == Draw)
 		cout << "There is a Draw!" << endl;
 	if (status == First)
-		cout << players[0].GetName() << " wins a game!" << endl;
+		cout << players[0]->GetName() << " wins a game!" << endl;
 	if (status == Second)
-		cout << players[1].GetName() << " wins a game!" << endl;
+		cout << players[1]->GetName() << " wins a game!" << endl;
 	cout << "Game ended." << endl;
 }
 
@@ -86,11 +87,12 @@ UserInterface::MenuItem UserInterface::MenuDialog() {
 	return (UserInterface::MenuItem) (getInput - '0');
 }
 
-std::string UserInterface::InputPlayerName(std::string who) {
-	std::string name;
+string UserInterface::InputPlayerName(string who) {
+	string name;
 	do {
+		cin.clear();
 		cout << "Enter " << who << " name: ";
-		std::getline(cin, name);
+		getline(cin, name);
 	} while (name == "");
 	return name;
 }
@@ -108,10 +110,12 @@ bool UserInterface::GetHostAddress(Network::RemoteAddress* addr) {
 	addr->addr = "";
 	addr->port = "";
 	while (addr->addr == "") {
+		cin.clear();
 		getline(cin, addr->addr);
 	}
 	cout << "Enter host port (-1 for default): ";
 	while (addr->port == "") {
+		cin.clear();
 		getline(cin, addr->port);
 	}
 	if (addr->port == "-1") {
@@ -128,7 +132,7 @@ void UserInterface::Show_PlayerDisconnected(const Player* player) {
 	cout << "Player " << player->GetName() << " left the game." << endl;
 }
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	void UserInterface::ShowDebugInfo(const char* info){
 		cout << endl << "DEBUG: " << info << endl;
 	}

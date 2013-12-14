@@ -4,6 +4,12 @@
 #include "Game.h"
 #include <cstring>
 
+#ifdef DEBUG
+#include "Game.h"
+#include <iostream>
+#include <sstream>
+#endif
+
 extern int ReceiveStr(SOCKET clSocket, string& key, string& value);
 extern int SendStr(string key, string value, SOCKET to);
 
@@ -11,11 +17,23 @@ bool Network::IsConnected() const {
 	return HostSocket != SOCKET_ERROR;
 }
 
-void _KeepConnection(Network*parent) {
+void Network::_KeepConnection(Network*parent) {
 	int iResult;
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(parent->HostSocket, key, value)) > 0) {
+#ifdef DEBUG
+			std::stringstream a;
+			int b = (int)parent->HostSocket;
+			
+			sockaddr_in  addr = {0};
+			int *size = new int;
+			*size = sizeof(addr);
+			getpeername(parent->HostSocket,(sockaddr*)&addr,size);
+			delete size;
+			a << "port: " << addr.sin_port << "|socket:" << b << "| " << key << ":" << value;
+			Game::Instance()->userInterface.ShowDebugInfo(a.str().c_str());
+#endif
 			if (key == "PlayerStep") {
 				parent->ReceivedStepMutex.lock();
 				parent->ReceivedStep.i = short(char(value[0]));
@@ -45,7 +63,7 @@ void _KeepConnection(Network*parent) {
 			parent->StepFromPlayerIsReceivedMutex.unlock();
 			parent->ReceivedStepMutex.unlock();
 			closesocket(parent->HostSocket);
-			parent->HostSocket = SOCKET_ERROR;
+			parent->HostSocket = INVALID_SOCKET;
 		}
 	} while (iResult > 0);
 }
@@ -58,12 +76,12 @@ Network::Network() {
 
 Player::Step Network::GetPlayerStep() {
 	Game::Instance()->userInterface.Show_WaitingForOponentsStep();
+	Player::Step result;
 
 	StepFromPlayerIsReceivedMutex.wait();
-
-	Player::Step result;
 	ReceivedStepMutex.lock();
 	result = ReceivedStep;
+	StepFromPlayerIsReceivedMutex.try_lock();
 	ReceivedStepMutex.unlock();
 	return result;
 }
@@ -179,4 +197,11 @@ bool Network::WaitForConnection() {
 	//TODO: no logic: repair later
 	PlayerIsConnectedWutex.wait();
 	return true;
+}
+
+Network::~Network() {
+	closesocket(HostSocket);
+	if (keepConnectionThread.joinable()) {
+			keepConnectionThread.join();
+	} 
 }

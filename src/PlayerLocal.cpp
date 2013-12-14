@@ -8,5 +8,6 @@ Player::Step PlayerLocal::MakeStep() {
 
 PlayerLocal::PlayerLocal(std::string _name) :
 		Player(_name) {
+	playerType = 0;
 }
 
