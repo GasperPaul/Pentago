@@ -4,8 +4,7 @@
 #include "Game.h"
 #include <cstring>
 
-extern int ReceiveStr(SOCKET clSocket, string& key, string& value);
-extern int SendStr(string key, string value, SOCKET to);
+#include "NetCommunication.h"
 
 bool Network::IsConnected() const {
 	return HostSocket != SOCKET_ERROR;
@@ -63,7 +62,7 @@ void Network::_KeepConnection(Network*parent) {
 Network::Network() {
 	HostSocket = INVALID_SOCKET;
 	StepFromPlayerIsReceivedMutex = CrossThreadMutex(true); //locked: no step received yet
-	PlayerIsConnectedWutex = CrossThreadMutex(true);// locked: no player in the same game yet;
+	PlayerIsConnectedWutex = CrossThreadMutex(true); // locked: no player in the same game yet;
 }
 
 Player::Step Network::GetPlayerStep() {
@@ -129,13 +128,7 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 		// Create a SOCKET for connecting to server
 		HostSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 		if (HostSocket == INVALID_SOCKET) {
-//			printf("socket failed with error: %ld\n", WSAGetLastError());
-//			WSACleanup();
-#ifdef _WIN32
-			return WSAGetLastError();
-#elif __linux__
 			return -1;
-#endif
 		}
 
 		// Connect to server.
@@ -151,25 +144,23 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 	freeaddrinfo(result);
 
 	if (HostSocket == INVALID_SOCKET) {
-//		printf("Unable to connect to server!\n");
-//		WSACleanup();
-		return 1;
+		return -1;
 	}
 
-	if ((PlayerNum == (char) Game::Player1) || (PlayerNum == (char) Game::PlayerBoth)) {
-		iResult = SendStr("Player1Name", player[Game::Player1]->GetName());
-		if (iResult != 0) {
-			return iResult;
-		}
-	}
 	if ((PlayerNum == (char) Game::Player2) || (PlayerNum == (char) Game::PlayerBoth)) {
 		iResult = SendStr("Player2Name", player[Game::Player2]->GetName());
 		if (iResult != 0) {
 			return iResult;
 		}
 	}
+	if ((PlayerNum == (char) Game::Player1) || (PlayerNum == (char) Game::PlayerBoth)) {
+		iResult = SendStr("Player1Name", player[Game::Player1]->GetName());
+		if (iResult != 0) {
+			return iResult;
+		}
+	}
 	if (keepConnectionThread.joinable()) {
-			keepConnectionThread.join();
+		keepConnectionThread.join();
 	}
 	keepConnectionThread = thread(_KeepConnection, this);
 	if (PlayerNum == (char) Game::Player2) {
@@ -194,6 +185,6 @@ bool Network::WaitForConnection() {
 Network::~Network() {
 	closesocket(HostSocket);
 	if (keepConnectionThread.joinable()) {
-			keepConnectionThread.join();
-	} 
+		keepConnectionThread.join();
+	}
 }

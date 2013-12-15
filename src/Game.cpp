@@ -131,8 +131,8 @@ const Player * Game::GetCurrentPlayer() const {
 }
 
 Game::Game(){
-	players[0]=NULL;
-	players[1]=NULL;
+	players[0]=new Player("Hello");
+	players[1]=new Player("world!");
 	server = NULL;
 	currentPlayer = Player1;
 }

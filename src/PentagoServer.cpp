@@ -14,81 +14,13 @@ using std::thread;
 using std::string;
 
 const std::string PentagoServer::DEFAULT_PORT = "26326";
-
-//debug
-#ifdef DEBUG
-#include "Game.h"
-#include <iostream>
-#include <sstream>
-#endif
-
-// put it in separate file later
-//**
-int ReceiveStr(SOCKET clSocket, string& key, string& value) {
-	int iResult;
-	int32_t sizeVal;
-	iResult = recv(clSocket, (char*)&sizeVal, sizeof(sizeVal), MSG_WAITALL);
-	if (iResult <= 0) {
-		return iResult;
-	}
-	key.resize(sizeVal);
-	iResult = recv(clSocket, (char*)&sizeVal, sizeof(sizeVal), MSG_WAITALL);
-	if (iResult <= 0) {
-		return iResult;
-	}
-	value.resize(sizeVal);
-	if (key.length() > 0) {
-		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), MSG_WAITALL);
-		if (iResult <= 0) {
-			return iResult;
-		}
-	}
-	if (value.length() > 0) {
-		iResult = recv(clSocket, const_cast<char*>(value.c_str()), value.length(), MSG_WAITALL);
-		if (iResult <= 0) {
-			return iResult;
-		}
-	}
-#ifdef DEBUG
-	Game::Instance()->userInterface.ShowDebugInfo(("Received: " + key + ":" + value).c_str());
-#endif
-	return iResult;
-}
-
-int SendStr(string key, string value, SOCKET to) {
-	size_t buf_size = key.length() + value.length() + 2 * sizeof(int32_t);
-	char *sendbuf = new char[buf_size];
-	((int32_t*) sendbuf)[0] = key.length();
-	((int32_t*) sendbuf)[1] = value.length();
-	memcpy((char*) (((int32_t*) sendbuf) + 2), key.c_str(), key.length());
-	memcpy(((char*) (((int32_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
-	int iResult = send(to, sendbuf, buf_size, 0);
-	delete[] sendbuf;
-	if (iResult == SOCKET_ERROR) {
-		return iResult;
-	}
-	return 0;
-}
-//**
-//
+#include "NetCommunication.h"
 
 void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	int iResult;
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(clSocket, key, value)) > 0) {
-#ifdef _DEBUG
-			std::stringstream a;
-			int b = (int) clSocket;
-
-			sockaddr_in addr = { 0 };
-			int *size = new int;
-			*size = sizeof(addr);
-			getpeername(clSocket, (sockaddr*) &addr, size);
-			delete size;
-			a << "port: " << htons(addr.sin_port) << "|socket:" << b << "| " << key << ":" << value;
-			Game::Instance()->userInterface.ShowDebugInfo(a.str().c_str());
-#endif
 			if (key == "PlayerStep") {
 				parent->_SendMsgToAll(key, value, clSocket);
 			} else if (key == "Player1Name") {
