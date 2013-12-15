@@ -24,6 +24,7 @@ const Player* Game::GetPlayer(PlayersNum who) const {
 
 void Game::Run() {
 	int iResult;
+	userInterface = UserInterface(&board);
 	std::string myName = userInterface.InputPlayerName("your");
 	for (;;) {
 		Network::RemoteAddress param;
@@ -84,7 +85,7 @@ void Game::Run() {
 			break;
 		}
 		case UserInterface::ConnectToServer: {
-			if (userInterface.GetHostAddress(param)) {
+			if (userInterface.GetHostAddress(&param)) {
 				delete players[Player2];
 				delete players[Player1];
 				players[Player1] = new PlayerNetwork("");
@@ -114,7 +115,7 @@ void Game::PlayGame() {
 	board = Board();
 	currentPlayer = Player1;
 	userInterface.Show_GameBegins();
-	userInterface.PaintBoard(board);
+	userInterface.PaintBoard();
 	while (referee.UpdateWinState(board) == NoOne) {
 		bool flag;
 		Player::Step step;
@@ -138,10 +139,10 @@ void Game::PlayGame() {
 		currentPlayer = currentPlayer ? Player1 : Player2;
 
 		// displaying the board
-		userInterface.PaintBoard(board);
+		userInterface.PaintBoard();
 	}
 
-	userInterface.ShowWinner(referee.WinnerIs(), players);
+	userInterface.ShowWinner(referee.WinnerIs());
 }
 
 const Player * Game::GetCurrentPlayer() const {

@@ -28,9 +28,6 @@ public:
 	//менюшка, тощо
 	void Run();
 
-//	void TempTestReferee();//Temp
-	UserInterface userInterface;
-	Network network;
 	void SetPlayerName(PlayersNum playerNum, const string& name);
 	const Player* GetPlayer(PlayersNum who) const;
 	const Player* GetCurrentPlayer() const;
@@ -38,7 +35,6 @@ private:
 	//а тут вже буде вся гра, аж поки не вийде назад в меню
 	void PlayGame();
 
-	Board board;
 	Player* players[2];
 	Referee referee;
 	PentagoServer *server;
@@ -46,6 +42,10 @@ private:
 	PlayersNum currentPlayer;
 	Game();
 	Game(const Game&);
+public:
+	Network network;
+	Board board;
+	UserInterface userInterface;
 };
 
 #endif /* GAME_H */

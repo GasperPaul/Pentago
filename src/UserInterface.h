@@ -3,35 +3,38 @@
 
 #include <string>
 
-#include "Board.h"
 #include "Referee.h"
+#include "Board.h"
 #include "Player.h"
 #include "Network.h"
 
 class UserInterface {
 public:
-	enum MenuItem {ExitGame=0,LocalGame=1,StartHost=2,ConnectToServer=3};
+	enum MenuItem {
+		ExitGame = 0, LocalGame = 1, StartHost = 2, ConnectToServer = 3
+	};
 
-	UserInterface();
+	UserInterface(const Board *board = NULL);
+	~UserInterface();
 
 	//wait until player made it's step
 	Player::Step GetPlayerStep(const Player* player);
-	
+
 	//obviously
-	void PaintBoard(Board& board);
-	
+	void PaintBoard();
+
 	//obviously too
-	void ShowWinner(winstatus status,Player* players[2]);
-	
+	void ShowWinner(winstatus status);
+
 	//obviously too
 	void Show_StepIsNotAllowed();
-	
+
 	//�������� ��������� �������
 	MenuItem MenuDialog();
 
 	//�������� ������� � ������� ������ �����
 	//������ ����� �������� ������������ ����� �� �������� �����
-	bool GetHostAddress(Network::RemoteAddress& addr);
+	bool GetHostAddress(Network::RemoteAddress* addr);
 
 	//���� �������, ������� �, ����'������, �����
 	void Show_GameBegins();
@@ -39,8 +42,8 @@ public:
 	void Show_WaitingForOponentsStep();
 
 	//������� � �����, � ���� � �����������, ����
-	//!important can't be ""
-	std::string InputPlayerName(std::string who);
+	//can't return ""
+	std::string InputPlayerName(const std::string& who);
 
 	//�������� � ������� (����������� � Network)
 	void Show_WaitForConnection();
@@ -54,7 +57,14 @@ public:
 
 	void Show_CanNotStartServer();
 
+#ifdef _PENTAGO_OPENGL_
+private:
+	std::thread *GLthread;
+#endif
+private:
+	const Board * _board;
 #ifdef DEBUG
+public:
 	void ShowDebugInfo(const char* info);
 #endif
 };

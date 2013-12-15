@@ -21,10 +21,12 @@ public:
 	short& operator()(short, short);
 	short* operator[](short);
 	
+	void Clear();
+
 private:
-	short board[6][6];
+	typedef short TheBoard[6][6];
+	TheBoard board;
 	unsigned stepNum;
-	
 };
 
 #endif /* BOARD_H */
