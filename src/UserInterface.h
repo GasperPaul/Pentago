@@ -50,6 +50,10 @@ public:
 
 	void Show_PlayerDisconnected(const Player* player);
 
+	void Show_CanNotConnect(const Network::RemoteAddress* addr);
+
+	void Show_CanNotStartServer();
+
 #ifdef DEBUG
 	void ShowDebugInfo(const char* info);
 #endif

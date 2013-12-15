@@ -25,23 +25,31 @@ const Player* Game::GetPlayer(PlayersNum who) const {
 void Game::Run() {
 	int iResult;
 	std::string myName = userInterface.InputPlayerName("your");
-	for (;;)
+	for (;;) {
+		Network::RemoteAddress param;
 		switch (userInterface.MenuDialog()) {
 		case UserInterface::ExitGame: {
 			return;
 		}
 		case UserInterface::LocalGame: {
 			server = new PentagoServer(PentagoServer::DEFAULT_PORT);
+			if (!server->IsGood()) {
+				userInterface.Show_CanNotStartServer();
+				delete server;
+				server = 0;
+				continue;
+			}
 			delete players[Player1];
 			delete players[Player2];
 			players[Player1] = new PlayerLocal(myName);
 			players[Player2] = new PlayerLocal(userInterface.InputPlayerName("player 2"));
-			Network::RemoteAddress param;
 			param.addr = "127.0.0.1";
 			param.port = PentagoServer::DEFAULT_PORT;
 			iResult = network.Connect(&param, players, (char) PlayerBoth);
 			if (iResult == 0) {
-					PlayGame();
+				PlayGame();
+			} else {
+				userInterface.Show_CanNotConnect(&param);
 			}
 			delete server;
 			server = 0;
@@ -49,39 +57,49 @@ void Game::Run() {
 		}
 		case UserInterface::StartHost: {
 			server = new PentagoServer(PentagoServer::DEFAULT_PORT);
+			if (!server->IsGood()) {
+				userInterface.Show_CanNotStartServer();
+				delete server;
+				server = 0;
+				continue;
+			}
 			delete players[Player1];
 			delete players[Player2];
 			players[Player1] = new PlayerLocal(myName);
 			players[Player2] = new PlayerNetwork("");
-			Network::RemoteAddress * param = new Network::RemoteAddress;
-			param->addr = "127.0.0.1";
-			param->port = PentagoServer::DEFAULT_PORT;
-			iResult = network.Connect(param, players, Player1);
+			param.addr = "127.0.0.1";
+			param.port = PentagoServer::DEFAULT_PORT;
+			iResult = network.Connect(&param, players, Player1);
 			if (iResult == 0) {
 				if (network.WaitForConnection()) {
 					PlayGame();
+				} else {
+					//TODO: complete it
 				}
+			} else {
+				userInterface.Show_CanNotConnect(&param);
 			}
 			delete server;
 			server = 0;
 			break;
 		}
 		case UserInterface::ConnectToServer: {
-			Network::RemoteAddress addr;
-			if (userInterface.GetHostAddress(addr)) {
+			if (userInterface.GetHostAddress(param)) {
 				delete players[Player2];
 				delete players[Player1];
-				//!important to be ""
 				players[Player1] = new PlayerNetwork("");
 				players[Player2] = new PlayerLocal(myName);
-				iResult = network.Connect(&addr, players, Player2);
+				iResult = network.Connect(&param, players, Player2);
 				if (iResult == 0) {
 					PlayGame();
+				} else {
+					userInterface.Show_CanNotConnect(&param);
 				}
 			}
 			break;
 		}
 		}
+	}
 }
 
 void Game::SetPlayerName(PlayersNum playerNum, const string& name) {
@@ -130,9 +148,9 @@ const Player * Game::GetCurrentPlayer() const {
 	return players[currentPlayer];
 }
 
-Game::Game(){
-	players[0]=new Player("Hello");
-	players[1]=new Player("world!");
+Game::Game() {
+	players[0] = new Player("Hello");
+	players[1] = new Player("world!");
 	server = NULL;
 	currentPlayer = Player1;
 }

@@ -78,7 +78,7 @@ void UserInterface::Show_GameBegins() {
 
 UserInterface::MenuItem UserInterface::MenuDialog() {
 	char getInput;
-	cout << "\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
+	cout << endl <<"\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
 			<< endl << "3. Connect to host." << endl << "0. Exit game." << endl;
 	do {
 		getInput = getchar();
@@ -130,6 +130,18 @@ void UserInterface::Show_WaitingForOponentsStep() {
 
 void UserInterface::Show_PlayerDisconnected(const Player* player) {
 	cout << "Player " << player->GetName() << " left the game." << endl;
+}
+
+void UserInterface::Show_CanNotConnect(const Network::RemoteAddress* addr) {
+	if (addr->port==PentagoServer::DEFAULT_PORT) {
+		cout << endl << "Can't connect to: " << addr->addr << ":" << addr->port << "." << endl;
+	} else {
+		cout << endl << "Can't connect to: " << addr->addr << "." << endl;
+	}
+}
+
+void UserInterface::Show_CanNotStartServer() {
+	cout << endl << "Server can't start. Check your firewall settings or check if the port is available." << endl;
 }
 
 #ifdef DEBUG
