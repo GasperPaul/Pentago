@@ -22,7 +22,7 @@ const std::string PentagoServer::DEFAULT_PORT = "26326";
 #include <sstream>
 #endif
 
-//����� ����� ������� �� � ������� ������
+// put it in separate file later
 //**
 int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 	int iResult;
