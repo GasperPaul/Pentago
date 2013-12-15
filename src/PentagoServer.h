@@ -22,7 +22,6 @@ using std::thread;
 
 class PentagoServer {
 public:
-	static const int DEFAULT_BUFLEN;
 	static const string DEFAULT_PORT;
 	PentagoServer(string port);
 	void RunPentagoServer();

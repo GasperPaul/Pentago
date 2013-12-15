@@ -4,17 +4,26 @@
  */
 #include "Player.h"
 
+#ifdef DEBUG
+#include "Game.h"
+#include <iostream>
+#include <sstream>
+#endif
+
 std::string Player::GetName() const{
-//	const_cast<mutex*>(&PlayerNameAccessMutex)->lock();
+	const_cast<mutex*>(&PlayerNameAccessMutex)->lock();
 	string name = this->name;
-//	const_cast<mutex*>(&PlayerNameAccessMutex)->unlock();
+	const_cast<mutex*>(&PlayerNameAccessMutex)->unlock();
 	return name;
 }
 
 void Player::SetName(const string name) {
-//	PlayerNameAccessMutex.lock();
+	PlayerNameAccessMutex.lock();
+#ifdef DEBUG
+	Game::Instance()->userInterface.ShowDebugInfo(("Name set: "+name).c_str());
+#endif
 	this->name = name;
-//	PlayerNameAccessMutex.unlock();
+	PlayerNameAccessMutex.unlock();
 }
 
 Player::Step Player::MakeStep() {
@@ -26,7 +35,8 @@ int Player::GetPlayerType() {
 	return playerType;
 }
 
-Player::Player(std::string _name) : name(_name) {
+Player::Player(std::string _name) {
+	SetName(_name);
 	playerType = -1;
 }
 Player::~Player() { }

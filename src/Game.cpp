@@ -43,7 +43,6 @@ void Game::Run() {
 			if (iResult == 0) {
 					PlayGame();
 			}
-			server->CloseServer();
 			delete server;
 			server = 0;
 			break;
@@ -63,7 +62,6 @@ void Game::Run() {
 					PlayGame();
 				}
 			}
-			server->CloseServer();
 			delete server;
 			server = 0;
 			break;

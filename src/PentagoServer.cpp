@@ -14,7 +14,6 @@ using std::thread;
 using std::string;
 
 const std::string PentagoServer::DEFAULT_PORT = "26326";
-const int PentagoServer::DEFAULT_BUFLEN = 1024;
 
 //debug
 #ifdef DEBUG
@@ -26,18 +25,18 @@ const int PentagoServer::DEFAULT_BUFLEN = 1024;
 //����� ����� ������� �� � ������� ������
 //**
 int ReceiveStr(SOCKET clSocket, string& key, string& value) {
-	char recvbuf[PentagoServer::DEFAULT_BUFLEN];
 	int iResult;
-	iResult = recv(clSocket, recvbuf, sizeof(int32_t), MSG_WAITALL);
+	int32_t sizeVal;
+	iResult = recv(clSocket, (char*)&sizeVal, sizeof(sizeVal), MSG_WAITALL);
 	if (iResult <= 0) {
 		return iResult;
 	}
-	key.resize(((int32_t*) recvbuf)[0]);
-	iResult = recv(clSocket, recvbuf, sizeof(int32_t), MSG_WAITALL);
+	key.resize(sizeVal);
+	iResult = recv(clSocket, (char*)&sizeVal, sizeof(sizeVal), MSG_WAITALL);
 	if (iResult <= 0) {
 		return iResult;
 	}
-	value.resize(((int32_t*) recvbuf)[0]);
+	value.resize(sizeVal);
 	if (key.length() > 0) {
 		iResult = recv(clSocket, const_cast<char*>(key.c_str()), key.length(), MSG_WAITALL);
 		if (iResult <= 0) {
@@ -51,19 +50,20 @@ int ReceiveStr(SOCKET clSocket, string& key, string& value) {
 		}
 	}
 #ifdef DEBUG
-	Game::Instance()->userInterface.ShowDebugInfo(("Received: "+key+":"+value).c_str());
+	Game::Instance()->userInterface.ShowDebugInfo(("Received: " + key + ":" + value).c_str());
 #endif
 	return iResult;
 }
 
 int SendStr(string key, string value, SOCKET to) {
-	//TODO: �������� ��������� ���������� ��� �������� ����� �� DEFAULT_BUFLEN
-	char sendbuf[PentagoServer::DEFAULT_BUFLEN];
+	size_t buf_size = key.length() + value.length() + 2 * sizeof(int32_t);
+	char *sendbuf = new char[buf_size];
 	((int32_t*) sendbuf)[0] = key.length();
 	((int32_t*) sendbuf)[1] = value.length();
 	memcpy((char*) (((int32_t*) sendbuf) + 2), key.c_str(), key.length());
 	memcpy(((char*) (((int32_t*) sendbuf) + 2)) + key.length(), value.c_str(), value.length());
-	int iResult = send(to, sendbuf, key.length() + value.length() + 2 * sizeof(int32_t), 0);
+	int iResult = send(to, sendbuf, buf_size, 0);
+	delete[] sendbuf;
 	if (iResult == SOCKET_ERROR) {
 		return iResult;
 	}
@@ -77,14 +77,14 @@ void PentagoServer::ProcessClient(PentagoServer*parent, SOCKET clSocket) {
 	string key, value;
 	do {
 		if ((iResult = ReceiveStr(clSocket, key, value)) > 0) {
-#ifdef DEBUG
+#ifdef _DEBUG
 			std::stringstream a;
-			int b = (int)clSocket;
+			int b = (int) clSocket;
 
-			sockaddr_in addr = {0};
+			sockaddr_in addr = { 0 };
 			int *size = new int;
 			*size = sizeof(addr);
-			getpeername(clSocket,(sockaddr*)&addr,size);
+			getpeername(clSocket, (sockaddr*) &addr, size);
 			delete size;
 			a << "port: " << htons(addr.sin_port) << "|socket:" << b << "| " << key << ":" << value;
 			Game::Instance()->userInterface.ShowDebugInfo(a.str().c_str());
@@ -129,7 +129,6 @@ void PentagoServer::KeepServerOn(PentagoServer*parent) {
 				closesocket(parent->_ListenSocket);
 			}
 			parent->isGood = false;
-			break;
 		}
 		parent->_AddClientToList(new thread(ProcessClient, parent, ClientSocket), ClientSocket);
 	}
@@ -137,9 +136,11 @@ void PentagoServer::KeepServerOn(PentagoServer*parent) {
 
 void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET from) {
 	clientsMutex.lock();
-	for (unsigned int i = 0; i < clients.size(); i++) {
-		if (clients[i] != from) {
-			SendStr(key, value, clients[i]);
+	if (isGood) {
+		for (unsigned int i = 0; i < clients.size(); i++) {
+			if (clients[i] != from) {
+				SendStr(key, value, clients[i]);
+			}
 		}
 	}
 	clientsMutex.unlock();
@@ -148,8 +149,10 @@ void PentagoServer::_SendMsgToAll(const string& key, const string& value, SOCKET
 void PentagoServer::_AddClientToList(thread* clThread, SOCKET clSocket) {
 	clientsMutex.lock();
 	clientProcessorsMutex.lock();
-	clientProcessors.push_back(clThread);
-	clients.push_back(clSocket);
+	if (isGood) {
+		clientProcessors.push_back(clThread);
+		clients.push_back(clSocket);
+	}
 	clientProcessorsMutex.unlock();
 	clientsMutex.unlock();
 }
@@ -158,14 +161,16 @@ void PentagoServer::_RemClientFromList(SOCKET clSocket) {
 	clientsMutex.lock();
 	clientProcessorsMutex.lock();
 	deletedThreadsMutex.lock();
-	vector<SOCKET>::iterator i = clients.begin();
-	vector<thread*>::iterator j = clientProcessors.begin();
-	for (unsigned int counter = 0; counter < clients.size(); counter++, j++, i++) {
-		if (*i == clSocket) {
-			clients.erase(i);
-			deletedThreads.push_back(*j);
-			clientProcessors.erase(j);
-			break;
+	if (isGood) {
+		vector<SOCKET>::iterator i = clients.begin();
+		vector<thread*>::iterator j = clientProcessors.begin();
+		for (unsigned int counter = 0; counter < clients.size(); counter++, j++, i++) {
+			if (*i == clSocket) {
+				clients.erase(i);
+				deletedThreads.push_back(*j);
+				clientProcessors.erase(j);
+				break;
+			}
 		}
 	}
 	deletedThreadsMutex.unlock();
@@ -240,7 +245,7 @@ bool PentagoServer::IsGood() {
 
 void PentagoServer::CloseServer() {
 	isGood = false;
-	_SendMsgToAll("ServerClosing","",-10);
+	_SendMsgToAll("ServerClosing", "", -10);
 	clientsMutex.lock();
 	for (unsigned i = 0; i < clients.size(); i++) {
 		shutdown(clients[i], SD_BOTH);
@@ -249,9 +254,11 @@ void PentagoServer::CloseServer() {
 	clientsMutex.unlock();
 	deletedThreadsMutex.lock();
 	for (unsigned i = 0; i < deletedThreads.size(); i++) {
-		if (deletedThreads[i]->joinable())
+		if (deletedThreads[i]->joinable()) {
 			deletedThreads[i]->join();
 			delete deletedThreads[i];
+		}
+		deletedThreads.clear();
 	}
 	deletedThreadsMutex.unlock();
 	clientProcessorsMutex.lock();
@@ -260,12 +267,14 @@ void PentagoServer::CloseServer() {
 			clientProcessors[i]->join();
 			delete clientProcessors[i];
 		}
+		clientProcessors.clear();
 	}
 	clientProcessorsMutex.unlock();
 	shutdown(_ListenSocket, SD_BOTH);
 	closesocket(_ListenSocket);
-	if (serv.joinable())
+	if (serv.joinable()) {
 		serv.join();
+	}
 }
 
 PentagoServer::~PentagoServer() {
