@@ -100,7 +100,6 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 	WSADATA wsaData;
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
-		//	printf("WSAStartup failed with error: %d\n", iResult);
 		return iResult;
 	}
 #endif
@@ -112,8 +111,6 @@ int Network::Connect(const RemoteAddress* settings, Player* player[2], char Play
 	// Resolve the server address and port
 	iResult = getaddrinfo(settings->addr.c_str(), settings->port.c_str(), &hints, &result);
 	if (iResult != 0) {
-//		printf("getaddrinfo failed with error: %d\n", iResult);
-//		WSACleanup();
 		return iResult;
 	}
 
@@ -182,9 +179,14 @@ bool Network::WaitForConnection() {
 	return true;
 }
 
-Network::~Network() {
+void Network::CloseConnection() {
+	shutdown(HostSocket, SD_BOTH);
 	closesocket(HostSocket);
 	if (keepConnectionThread.joinable()) {
 		keepConnectionThread.join();
 	}
+}
+
+Network::~Network() {
+	CloseConnection();
 }

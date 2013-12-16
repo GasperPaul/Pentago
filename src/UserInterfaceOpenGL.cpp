@@ -1,7 +1,7 @@
 #if defined(_PENTAGO_OPENGL_) && defined(__MainUserInterfaceFile)
 
-#include "UserInterface.h"
 #include "Player.h"
+#include "UserInterface.h"
 
 #include "GLInterface/GLRenderer.h"
 
@@ -30,7 +30,7 @@ UserInterface::~UserInterface() {
 
 Player::Step UserInterface::GetPlayerStep(const Player* player) {
 	cout << endl << "\t" << player->GetName() << ", make your move: " << endl
-	<< "Youw color is " << ((Game::GetInstance()->GetPlayer(Game::Player1) == player) ? "white." : "black.")
+	<< "Your color is " << ((Game::GetInstance()->GetPlayer(Game::Player1) == player) ? "white." : "black.")
 	<< endl;
 	_mutex.try_lock();
 	SetMode(PlayerStep);

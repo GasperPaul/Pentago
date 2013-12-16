@@ -26,7 +26,7 @@ void Game::Run() {
 	int iResult;
 	userInterface = UserInterface(true);
 	std::string myName = userInterface.InputPlayerName("your");
-	for (;;) {
+	while (!mustShutdown) {
 		Network::RemoteAddress param;
 		switch (userInterface.MenuDialog()) {
 		case UserInterface::ExitGame: {
@@ -116,7 +116,7 @@ void Game::PlayGame() {
 	currentPlayer = Player1;
 	userInterface.Show_GameBegins();
 	userInterface.PaintBoard();
-	while (referee.UpdateWinState(board) == NoOne) {
+	while ((!mustShutdown) && (referee.UpdateWinState(board) == NoOne)) {
 		bool flag;
 		Player::Step step;
 		do {
@@ -154,6 +154,7 @@ Game::Game() {
 	players[1] = new Player("world!");
 	server = NULL;
 	currentPlayer = Player1;
+	mustShutdown = false;
 }
 
 Game::~Game() {

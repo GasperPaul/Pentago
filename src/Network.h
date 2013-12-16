@@ -40,6 +40,8 @@ public:
 	bool WaitForConnection();
 	bool IsConnected() const;
 
+	void CloseConnection();
+
 private:
 	int SendStr(string key, string value);
 	RemoteAddress settings;

@@ -1,7 +1,9 @@
 #include "GLRenderer.h"
 
-#include "Button.h"
 #include "../Game.h"
+
+#include "Button.h"
+
 template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
@@ -152,8 +154,10 @@ void InitializeInterface() {
 		new Button( { 200, 280 }, { 456, 344 }, texture[8]), 
 		new Button( { 200, 360 }, { 456, 424 }, texture[9])
 	};
-//	*menuBtn[0] += [](GameObject*) { gameMode = PlayerStep; }; // NewGame;
-//	*menuBtn[1] += [](GameObject*) { glfwSetWindowShouldClose(window, 1); }; // Exit;
+	//	*menuBtn[0] += [](GameObject*) { }; // LocalGame
+	//	*menuBtn[1] += [](GameObject*) { glfwSetWindowShouldClose(window, 1); }; //Start host
+	//	*menuBtn[2] += [](GameObject*) { gameMode = PlayerStep; }; // NewGame; //Connect to host
+	*menuBtn[3] += [](GameObject*) {glfwSetWindowShouldClose(window, true);Controls::onWindowCloseCallBack(NULL);}; // Exit;
 	for (auto i : menuBtn)
 		menuButtons.push_back(i);
 
@@ -188,6 +192,7 @@ int GLmain(CrossThreadMutex* _mutex) {
 		glfwTerminate();
 		return -1;
 	}
+	glfwSetWindowCloseCallback(window, Controls::onWindowCloseCallBack);
 	glfwMakeContextCurrent(window);
 
 	glfwSetKeyCallback(window, Controls::keyboardCallback);
@@ -196,6 +201,9 @@ int GLmain(CrossThreadMutex* _mutex) {
 
 	InitializeInterface();
 	_mutex->unlock();
+	
+	//do not need mor for now
+	glfwSwapInterval(2);
 
 	while (!glfwWindowShouldClose(window)) {
 		/* Render here */

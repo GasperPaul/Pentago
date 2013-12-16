@@ -45,6 +45,7 @@ public:
 	Network network;
 	Board board;
 	UserInterface userInterface;
+	bool mustShutdown;
 };
 
 #endif /* GAME_H */
