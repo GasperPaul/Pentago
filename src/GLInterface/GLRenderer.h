@@ -7,6 +7,9 @@
 #define GLRENDERER_H
 
 #include "Controls.h"
+#include "../CrossThreadMutex.h"
+
+typedef void (*DrawingFunction)(void);
 
 struct Step {
 	short i, j;
@@ -14,14 +17,8 @@ struct Step {
 	char direction;
 };
 
-#include "../CrossThreadMutex.h"
 extern CrossThreadMutex _mutex;
 extern Step step;
-
-
-
-typedef void (*DrawingFunction)(void);
-
 extern int GLmain(CrossThreadMutex*);
 extern void SetMode(GameMode);
 extern void RefreshStones();

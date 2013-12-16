@@ -1,7 +1,5 @@
 #include "GLRenderer.h"
-
 #include "../Game.h"
-
 #include "Button.h"
 
 template <typename T> int sgn(T val) {
@@ -28,14 +26,10 @@ void MainMenuDraw() {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	glBegin(GL_QUADS);
-	glTexCoord2d(0.0, 0.0);
-	glVertex2d(-2.f, -2.f);
-	glTexCoord2d(1.0, 0.0);
-	glVertex2d(2.f, -2.f);
-	glTexCoord2d(1.0, 1.0);
-	glVertex2d(2.f, 2.f);
-	glTexCoord2d(0.0, 1.0);
-	glVertex2d(-2.f, 2.f);
+		glTexCoord2d(0.0, 0.0); glVertex2d(-2.f, -2.f);
+		glTexCoord2d(1.0, 0.0); glVertex2d(2.f, -2.f);
+		glTexCoord2d(1.0, 1.0); glVertex2d(2.f, 2.f);
+		glTexCoord2d(0.0, 1.0); glVertex2d(-2.f, 2.f);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 
@@ -48,26 +42,18 @@ void GameRender() {
 	// background
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	glBegin(GL_QUADS);
-	glTexCoord2d(0.0, 0.0);
-	glVertex2d(-2.f, -2.f);
-	glTexCoord2d(1.0, 0.0);
-	glVertex2d(2.f, -2.f);
-	glTexCoord2d(1.0, 1.0);
-	glVertex2d(2.f, 2.f);
-	glTexCoord2d(0.0, 1.0);
-	glVertex2d(-2.f, 2.f);
+		glTexCoord2d(0.0, 0.0); glVertex2d(-2.f, -2.f);
+		glTexCoord2d(1.0, 0.0); glVertex2d(2.f, -2.f);
+		glTexCoord2d(1.0, 1.0); glVertex2d(2.f, 2.f);
+		glTexCoord2d(0.0, 1.0); glVertex2d(-2.f, 2.f);
 	glEnd();
 	// board
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
 	glBegin(GL_QUADS);
-	glTexCoord2d(0.0, 0.0);
-	glVertex2d(-1.f, -1.f);
-	glTexCoord2d(1.0, 0.0);
-	glVertex2d(1.f, -1.f);
-	glTexCoord2d(1.0, 1.0);
-	glVertex2d(1.f, 1.f);
-	glTexCoord2d(0.0, 1.0);
-	glVertex2d(-1.f, 1.f);
+		glTexCoord2d(0.0, 0.0); glVertex2d(-1.f, -1.f);
+		glTexCoord2d(1.0, 0.0); glVertex2d(1.f, -1.f);
+		glTexCoord2d(1.0, 1.0); glVertex2d(1.f, 1.f);
+		glTexCoord2d(0.0, 1.0); glVertex2d(-1.f, 1.f);
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
 
@@ -157,7 +143,10 @@ void InitializeInterface() {
 	//	*menuBtn[0] += [](GameObject*) { }; // LocalGame
 	//	*menuBtn[1] += [](GameObject*) { glfwSetWindowShouldClose(window, 1); }; //Start host
 	//	*menuBtn[2] += [](GameObject*) { gameMode = PlayerStep; }; // NewGame; //Connect to host
-	*menuBtn[3] += [](GameObject*) {glfwSetWindowShouldClose(window, true);Controls::onWindowCloseCallBack(NULL);}; // Exit;
+	*menuBtn[3] += [](GameObject*) {
+		glfwSetWindowShouldClose(window, true);
+		Controls::onWindowCloseCallBack(NULL);
+	}; // Exit;
 	for (auto i : menuBtn)
 		menuButtons.push_back(i);
 
@@ -230,11 +219,8 @@ int GLmain(CrossThreadMutex* _mutex) {
 	}
 	glfwTerminate();
 
-	for (GameObject* obj : stones)
-		delete obj;
-	for (GameObject* obj : menuButtons)
-		delete obj;
-	for (GameObject* obj : rotationButtons)
-		delete obj;
+	for (GameObject* obj : stones) delete obj;
+	for (GameObject* obj : menuButtons) delete obj;
+	for (GameObject* obj : rotationButtons) delete obj;
 	return 0;
 }
