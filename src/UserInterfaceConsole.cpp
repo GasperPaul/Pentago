@@ -1,9 +1,5 @@
 #if defined(_PENTAGO_CONSOLE_) && defined(__MainUserInterfaceFile)
 
-#include "Game.h"
-#include "PentagoServer.h"
-#include "Player.h"
-
 #include <iostream>
 #include <string>
 #include <stdio.h>

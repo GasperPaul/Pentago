@@ -1,96 +1,129 @@
 #if defined(_PENTAGO_OPENGL_) && defined(__MainUserInterfaceFile)
 
-
+#include "UserInterface.h"
 #include "Player.h"
-#include "Board.h"
+
+#include "GLInterface/GLRenderer.h"
+
 #include "Game.h"
-#include "PentagoServer.h"
-
-
-#include <thread>
-
-#define GLFW_INCLUDE_GLU
-#include <GLFW/glfw3.h>
-
-#include "GLInterface/Stone.h"
-#include "GLInterface/Controls.h"
-#include "GLInterface/GLMain.h"
-#include "GLInterface/EventList.h"
 #include "CrossThreadMutex.h"
+
+#include <iostream>
+using namespace std;
 
 using std::thread;
 
-UserInterface::UserInterface(const Board * board) {
-	if ((_board = board) != NULL) {
-	CrossThreadMutex mutex = CrossThreadMutex(true);
-	GLthread = new thread(GLMain, &mutex);
-	mutex.wait();
+UserInterface::UserInterface(bool start) {
+	if (start) {
+		CrossThreadMutex mutex = CrossThreadMutex(true);
+		GLthread = new thread(GLmain, &mutex);
+		mutex.wait();
 	} else {
 		GLthread = NULL;
 	}
 }
 
 UserInterface::~UserInterface() {
-	if (GLthread && GLthread->joinable())
-		GLthread->join();
+//	if (GLthread && GLthread->joinable())
+//		GLthread->join();
 }
 
 Player::Step UserInterface::GetPlayerStep(const Player* player) {
-	return Player::Step();
+	cout << endl << "\t" << player->GetName() << ", make your move: " << endl
+	<< "Youw color is " << ((Game::GetInstance()->GetPlayer(Game::Player1) == player) ? "white." : "black.")
+	<< endl;
+	_mutex.try_lock();
+	SetMode(PlayerStep);
+	_mutex.wait();
+	return {step.i, step.j, step.quarter, (Board::RotateDirection)step.direction};
 }
 
 void UserInterface::PaintBoard() {
-	
+	SetMode(OponentStep);
+	RefreshStones();
 }
 
-void UserInterface::ShowWinner(winstatus status, Player* players[2]) {
-
+void UserInterface::ShowWinner(winstatus status) {
+	if (status == Draw)
+	cout << "There is a Draw!" << endl;
+	if (status == First)
+	cout << Game::GetInstance()->GetPlayer(Game::Player1)->GetName() << " wins a game!" << endl;
+	if (status == Second)
+	cout << Game::GetInstance()->GetPlayer(Game::Player2)->GetName() << " wins a game!" << endl;
+	cout << "Game ended." << endl;
 }
 
 void UserInterface::Show_StepIsNotAllowed() {
-
+	cout << endl << "This step is not allowed!" << endl;
 }
 
 void UserInterface::Show_GameBegins() {
-
+	cout << "Game begins." << endl;
 }
 
 UserInterface::MenuItem UserInterface::MenuDialog() {
-	return UserInterface::LocalGame;
+	SetMode(MainMenu);
+	char getInput;
+	cout << "\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
+	<< endl << "3. Connect to host." << endl << "0. Exit game." << endl;
+	do {
+		getInput = getchar();
+	}while ((getInput < '0') || (getInput > '3'));
+	getchar();
+	return (UserInterface::MenuItem) (getInput - '0');
 }
 
 std::string UserInterface::InputPlayerName(const std::string& who) {
-	return "Player";
+	std::string name;
+	do {
+		cout << "Enter " << who << " name: ";
+		std::getline(cin, name);
+	}while (name == "");
+	return name;
 }
 
 void UserInterface::Show_WaitForConnection() {
-
+	cout << "Waiting for oponent..." << endl;
 }
 
 void UserInterface::_PlayerConnected(const Player* player) {
-
+	cout << "Player \"" << player->GetName() << "\" connected." << endl;
 }
 
 bool UserInterface::GetHostAddress(Network::RemoteAddress* addr) {
-	addr->addr="localhost";
-	addr->port=PentagoServer::DEFAULT_PORT;
+	cout << "Enter host address: ";
+	addr->addr = "";
+	addr->port = "";
+	while (addr->addr == "") {
+		getline(cin, addr->addr);
+	}
+	cout << "Enter host port (-1 for default): ";
+	while (addr->port == "") {
+		getline(cin, addr->port);
+	}
+	if (addr->port == "-1") {
+		addr->port = PentagoServer::DEFAULT_PORT;
+	}
 	return true;
 }
 
 void UserInterface::Show_WaitingForOponentsStep() {
-
+	cout << "Waiting until player "<< Game::GetInstance()->GetCurrentPlayer()->GetName() << " makes his move..." << endl;
 }
 
 void UserInterface::Show_PlayerDisconnected(const Player* player) {
-
+	cout << "Player " << player->GetName() << " left the game." << endl;
 }
 
-
 void UserInterface::Show_CanNotStartServer() {
-
+	cout << endl << "Server can't start. Check your firewall settings or check if the port is available." << endl;
 }
 
 void UserInterface::Show_CanNotConnect(const Network::RemoteAddress* addr) {
-
+	if (addr->port==PentagoServer::DEFAULT_PORT) {
+		cout << endl << "Can't connect to: " << addr->addr << ":" << addr->port << "." << endl;
+	} else {
+		cout << endl << "Can't connect to: " << addr->addr << "." << endl;
+	}
 }
 #endif // _PENTAGO_OPENGL_

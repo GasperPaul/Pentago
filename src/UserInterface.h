@@ -2,11 +2,14 @@
 #define USER_INTERFACE_H
 
 #include <string>
+#include <thread>
 
 #include "Referee.h"
 #include "Board.h"
 #include "Player.h"
 #include "Network.h"
+
+#include "PentagoServer.h"
 
 class UserInterface {
 public:
@@ -14,7 +17,7 @@ public:
 		ExitGame = 0, LocalGame = 1, StartHost = 2, ConnectToServer = 3
 	};
 
-	UserInterface(const Board *board = NULL);
+	UserInterface(bool start = false);
 	~UserInterface();
 
 	//wait until player made it's step
@@ -61,8 +64,6 @@ public:
 private:
 	std::thread *GLthread;
 #endif
-private:
-	const Board * _board;
 #ifdef DEBUG
 public:
 	void ShowDebugInfo(const char* info);

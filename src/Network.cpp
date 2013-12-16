@@ -24,12 +24,12 @@ void Network::_KeepConnection(Network*parent) {
 				parent->StepFromPlayerIsReceivedMutex.unlock();
 				parent->ReceivedStepMutex.unlock();
 			} else if (key == "Player1Name") {
-				Game *game = Game::Instance();
+				Game *game = Game::GetInstance();
 				game->SetPlayerName(Game::Player1, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player1));
 				parent->PlayerIsConnectedWutex.unlock();
 			} else if (key == "Player2Name") {
-				Game *game = Game::Instance();
+				Game *game = Game::GetInstance();
 				game->SetPlayerName(Game::Player2, value);
 				game->userInterface._PlayerConnected(game->GetPlayer(Game::Player2));
 				parent->PlayerIsConnectedWutex.unlock();
@@ -66,7 +66,7 @@ Network::Network() {
 }
 
 Player::Step Network::GetPlayerStep() {
-	Game::Instance()->userInterface.Show_WaitingForOponentsStep();
+	Game::GetInstance()->userInterface.Show_WaitingForOponentsStep();
 	Player::Step result;
 
 	StepFromPlayerIsReceivedMutex.wait();
@@ -176,7 +176,7 @@ int Network::SendStr(string key, string value) {
 }
 
 bool Network::WaitForConnection() {
-	Game::Instance()->userInterface.Show_WaitForConnection();
+	Game::GetInstance()->userInterface.Show_WaitForConnection();
 	//TODO: no logic: repair later
 	PlayerIsConnectedWutex.wait();
 	return true;

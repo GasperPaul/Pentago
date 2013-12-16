@@ -8,7 +8,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-
 #include "UserInterface.h"
 #include "Board.h"
 #include "PlayerLocal.h"
@@ -23,7 +22,7 @@ public:
 		Player1 = 0, Player2 = 1, PlayerBoth=-1
 	};
 	virtual ~Game();
-	static Game* Instance();
+	static Game* GetInstance();
 
 	//менюшка, тощо
 	void Run();

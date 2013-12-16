@@ -10,7 +10,7 @@
 
 Game* Game::instance = 0;
 
-Game* Game::Instance() {
+Game* Game::GetInstance() {
 	if (!instance)
 		instance = new Game();
 	return instance;
@@ -24,7 +24,7 @@ const Player* Game::GetPlayer(PlayersNum who) const {
 
 void Game::Run() {
 	int iResult;
-	userInterface = UserInterface(&board);
+	userInterface = UserInterface(true);
 	std::string myName = userInterface.InputPlayerName("your");
 	for (;;) {
 		Network::RemoteAddress param;
@@ -112,7 +112,7 @@ void Game::SetPlayerName(PlayersNum playerNum, const string& name) {
 	}
 }
 void Game::PlayGame() {
-	board = Board();
+	board.Clear();
 	currentPlayer = Player1;
 	userInterface.Show_GameBegins();
 	userInterface.PaintBoard();

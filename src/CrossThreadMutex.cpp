@@ -7,6 +7,12 @@
 
 #include "CrossThreadMutex.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#elif __linux__//_WIN32
+#include <unistd.h>
+#define Sleep(x) usleep(x*1000)
+#endif //_WIN32
 
 CrossThreadMutex::CrossThreadMutex(bool _isLocked) {
 	isLocked = _isLocked;

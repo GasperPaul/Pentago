@@ -3,7 +3,7 @@
 #include "Game.h"
 
 Player::Step PlayerLocal::MakeStep() {
-	return Game::Instance()->userInterface.GetPlayerStep(this);
+	return Game::GetInstance()->userInterface.GetPlayerStep(this);
 }
 
 PlayerLocal::PlayerLocal(std::string _name) :
