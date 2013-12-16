@@ -18,11 +18,7 @@ void RefreshStones() {
 		int x = (i->GetCenter().x - 120) / 80;
 		int y = (i->GetCenter().y - 40) / 80;
 
-		char tmp = sgn(game->board[x][y]);
-		i->IsSet(Stone::Type(tmp));
-	//			board[x][y] > 0 ?
-		//				Stone::Type::White :
-			//			(board[x][y] < 0 ? Stone::Type::Black : Stone::Type::Empty));
+		i->IsSet(Stone::Type(sgn(game->board[x][y])));
 	}
 }
 
@@ -137,6 +133,8 @@ void InitializeInterface() {
 	texture.push_back(GLutils::LoadTexture("assets/L2.raw", 256, 256, true));
 	texture.push_back(GLutils::LoadTexture("assets/R2.raw", 256, 256, true));
 	texture.push_back(GLutils::LoadTexture("assets/new.raw", 1024, 256, true));
+	texture.push_back(GLutils::LoadTexture("assets/host.raw", 1024, 256, true));
+	texture.push_back(GLutils::LoadTexture("assets/join.raw", 1024, 256, true));	
 	texture.push_back(GLutils::LoadTexture("assets/exit.raw", 1024, 256, true));
 
 	// stones
@@ -148,19 +146,28 @@ void InitializeInterface() {
 		}
 
 	// main menu
-	Button* menuBtn[] = { new Button( { 200, 120 }, { 456, 184 }, texture[6]), new Button( { 200,
-			200 }, { 456, 264 }, texture[7]) };
+	Button* menuBtn[] = { 
+		new Button( { 200, 120 }, { 456, 184 }, texture[6]), 
+		new Button( { 200, 200 }, { 456, 264 }, texture[7]),
+		new Button( { 200, 280 }, { 456, 344 }, texture[8]), 
+		new Button( { 200, 360 }, { 456, 424 }, texture[9])
+	};
 //	*menuBtn[0] += [](GameObject*) { gameMode = PlayerStep; }; // NewGame;
 //	*menuBtn[1] += [](GameObject*) { glfwSetWindowShouldClose(window, 1); }; // Exit;
 	for (auto i : menuBtn)
 		menuButtons.push_back(i);
 
 	// rotation buttons
-	Button* rotBtn[] = { new Button( { 0, 0 }, { 50, 50 }, texture[3]), new Button( { 0, 60 }, { 50,
-			110 }, texture[2]), new Button( { 0, 370 }, { 50, 420 }, texture[3]), new Button( { 0,
-			430 }, { 50, 480 }, texture[2]), new Button( { 590, 0 }, { 640, 50 }, texture[4]),
-			new Button( { 590, 60 }, { 640, 110 }, texture[5]), new Button( { 590, 370 },
-					{ 640, 420 }, texture[4]), new Button( { 590, 430 }, { 640, 480 }, texture[5]) };
+	Button* rotBtn[] = { 
+		new Button( { 0, 0 }, { 50, 50 }, texture[3]), 
+		new Button( { 0, 60 }, { 50,	110 }, texture[2]), 
+		new Button( { 0, 370 }, { 50, 420 }, texture[3]), 
+		new Button( { 0, 430 }, { 50, 480 }, texture[2]), 
+		new Button( { 590, 0 }, { 640, 50 }, texture[4]),
+		new Button( { 590, 60 }, { 640, 110 }, texture[5]), 
+		new Button( { 590, 370 }, { 640, 420 }, texture[4]), 
+		new Button( { 590, 430 }, { 640, 480 }, texture[5]) 
+	};
 
 	for (auto i : rotBtn) {
 		*i += rotateClick;
