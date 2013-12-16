@@ -1,5 +1,5 @@
 /*
- *  Created on: 10 лист. 2013
+ *  Created on: 10 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 
@@ -7,16 +7,32 @@
 #define PLAYER_H
 
 #include <string>
+#include <mutex>
+
+using std::string;
+using std::mutex;
+
+#include "Board.h"
 
 class Player {
 public:
+	struct Step {
+		short i,j;
+		short quarter;
+		Board::RotateDirection direction;
+	};
 	Player(std::string _name = "Player");
 	virtual ~Player();
-	short* Step();
-	std::string Name();
+	virtual Player::Step MakeStep();
 
+	string GetName() const;
+	void SetName(const string name);
+	int GetPlayerType();
+protected:
+	int playerType;
 private:
-	std::string name;
+	string name;
+	mutex PlayerNameAccessMutex;
 };
 
 #endif /* PLAYER_H */

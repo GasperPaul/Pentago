@@ -6,7 +6,7 @@
 #include "Game.h"
 
 int main(){
-	Game* game = Game::Instance();
+	Game* game = Game::GetInstance();
 	game->Run();
 	return 0;
 }
