@@ -1,5 +1,5 @@
 /*
- *  Created on: 11 груд. 2013
+ *  Created on: 11 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 
@@ -11,7 +11,7 @@
 #include "Stone.h"
 
 #define GLFW_INCLUDE_GLU
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 
 enum GameMode { MainMenu, PlayerStep, Rotation, OponentStep };
 

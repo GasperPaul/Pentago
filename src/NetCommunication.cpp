@@ -1,11 +1,12 @@
 /*
  * NetCommunication.cpp
  *
- *  Created on: 15 груд. 2013
+ *  Created on: 15 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Youw
  */
 
 #include "NetCommunication.h"
+#include <cstring>
 
 int ReceiveStr(SOCKET from, string& key, string& value) {
 	int iResult, iSum = 0;

@@ -1,12 +1,12 @@
 /*
- *  Created on: 9 груд. 2013
+ *  Created on: 9 пїЅпїЅпїЅпїЅ. 2013
  *      Author: Gasper
  */
 
 #ifndef GLUTILS_H
 #define GLUTILS_H
 
-#include <GL/glu.h>
+#include "GL/glu.h"
 #include <fstream>
 #include "structs.h"
 
