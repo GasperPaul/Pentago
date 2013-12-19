@@ -8,7 +8,7 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 #endif //_MSC_VER
-#elif __linux__ //_WIN32
+#elif defined(__linux__) || defined(__APPLE__) //_WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
