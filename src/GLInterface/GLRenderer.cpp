@@ -82,7 +82,11 @@ void SetMode(GameMode _mode) {
 		break;
 	case OponentStep:
 		Redraw = GameRender;
-		glfwSetMouseButtonCallback(window, Controls::OponentStepCallback);
+		glfwSetMouseButtonCallback(window, Controls::WaitingCallback);
+		break;
+	case Waiting:
+		Redraw = MainMenuDraw;
+		glfwSetMouseButtonCallback(window, Controls::WaitingCallback);
 		break;
 	}
 }
@@ -140,12 +144,25 @@ void InitializeInterface() {
 		new Button( { 200, 280 }, { 456, 344 }, texture[8]), 
 		new Button( { 200, 360 }, { 456, 424 }, texture[9])
 	};
-	//	*menuBtn[0] += [](GameObject*) { }; // LocalGame
-	//	*menuBtn[1] += [](GameObject*) { glfwSetWindowShouldClose(window, 1); }; //Start host
-	//	*menuBtn[2] += [](GameObject*) { gameMode = PlayerStep; }; // NewGame; //Connect to host
+	*menuBtn[0] += [](GameObject*) {
+		menuPressed = UserInterface::MenuItem::LocalGame;
+		SetMode(Waiting);
+		_mutex.unlock();
+	}; // LocalGame
+	*menuBtn[1] += [](GameObject*) {
+		menuPressed = UserInterface::MenuItem::StartHost;
+		SetMode(Waiting);
+		_mutex.unlock();
+	}; //Start host
+	*menuBtn[2] += [](GameObject*) {
+		menuPressed = UserInterface::MenuItem::ConnectToServer;
+		SetMode(Waiting);
+		_mutex.unlock();
+	}; // NewGame; //Connect to host
 	*menuBtn[3] += [](GameObject*) {
 		glfwSetWindowShouldClose(window, true);
-		Controls::onWindowCloseCallBack(NULL);
+		menuPressed = UserInterface::MenuItem::ExitGame;
+		_mutex.unlock();
 	}; // Exit;
 	for (auto i : menuBtn)
 		menuButtons.push_back(i);

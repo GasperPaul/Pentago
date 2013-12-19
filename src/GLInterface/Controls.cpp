@@ -13,6 +13,7 @@
 
 //*externs
 GameMode gameMode;
+UserInterface::MenuItem menuPressed;
 std::vector<Stone*> stones;
 std::vector<GameObject*> menuButtons;
 std::vector<GameObject*> rotationButtons;
@@ -42,6 +43,18 @@ void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 	case GLFW_KEY_ESCAPE:
 		glfwSetWindowShouldClose(window, true);
 		break;
+	}
+}
+
+void WaitingCallback(GLFWwindow* window, int button, int action, int mods){
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		switch(action) {
+		case GLFW_PRESS:
+//			glfwGetCursorPos(window, &cursor.position.x, &cursor.position.y);
+//			for(GameObject* obj : menuButtons)
+//				obj->Clicked(cursor.position);
+			break;
+		}
 	}
 }
 

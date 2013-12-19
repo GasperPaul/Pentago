@@ -24,6 +24,7 @@ UserInterface::UserInterface(bool start) {
 }
 
 UserInterface::~UserInterface() {
+	//TODO: fix it
 //	if (GLthread && GLthread->joinable())
 //		GLthread->join();
 }
@@ -35,6 +36,7 @@ Player::Step UserInterface::GetPlayerStep(const Player* player) {
 	_mutex.try_lock();
 	SetMode(PlayerStep);
 	_mutex.wait();
+	cout <<  "Your step is: " << step.i << " " << step.j << " " << step.quarter << " " << (int)step.direction << endl;
 	return {step.i, step.j, step.quarter, (Board::RotateDirection)step.direction};
 }
 
@@ -62,18 +64,23 @@ void UserInterface::Show_GameBegins() {
 }
 
 UserInterface::MenuItem UserInterface::MenuDialog() {
+	cout << "\n\tMake your choice in main menu." << endl;
+	_mutex.try_lock();
 	SetMode(MainMenu);
-	char getInput;
-	cout << "\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
-	<< endl << "3. Connect to host." << endl << "0. Exit game." << endl;
-	do {
-		getInput = getchar();
-	}while ((getInput < '0') || (getInput > '3'));
-	getchar();
-	return (UserInterface::MenuItem) (getInput - '0');
+	_mutex.wait();
+	return menuPressed;
+	//char getInput;
+	//cout << "\tMake your choice:" << endl << "1. Local game." << endl << "2. Start game host."
+	//<< endl << "3. Connect to host." << endl << "0. Exit game." << endl;
+	//do {
+	//	getInput = getchar();
+	//}while ((getInput < '0') || (getInput > '3'));
+	//getchar();
+	//return (UserInterface::MenuItem) (getInput - '0');
 }
 
 std::string UserInterface::InputPlayerName(const std::string& who) {
+	SetMode(Waiting);
 	std::string name;
 	do {
 		cout << "Enter " << who << " name: ";
@@ -83,6 +90,7 @@ std::string UserInterface::InputPlayerName(const std::string& who) {
 }
 
 void UserInterface::Show_WaitForConnection() {
+	SetMode(Waiting);
 	cout << "Waiting for oponent..." << endl;
 }
 
