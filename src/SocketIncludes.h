@@ -1,14 +1,20 @@
+
+#ifndef SocketIncludes_h
+#define SocketIncludes_h 1
+
 #ifdef _WIN32
+
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
-#include <windows.h>
 #include <ws2tcpip.h>
+
 #ifdef _MSC_VER 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
-#pragma comment (lib, "AdvApi32.lib")
 #endif //_MSC_VER
+
 #elif defined(__linux__) || defined(__APPLE__) //_WIN32
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,4 +25,7 @@
 #define SOCKET int
 #define closesocket(x) close(x)
 #define SD_BOTH 2
+
 #endif //_WIN32
+
+#endif //SocketIncludes_h

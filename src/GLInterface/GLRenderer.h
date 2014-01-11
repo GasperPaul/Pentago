@@ -7,7 +7,6 @@
 #define GLRENDERER_H
 
 #include "Controls.h"
-#include "../CrossThreadMutex.h"
 
 typedef void (*DrawingFunction)(void);
 
